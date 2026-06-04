@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Targetolog — Energiya AI</title>
+<style>:root{--primary:#6C3CE1;--primary-light:#8B5CF6;--primary-dark:#4C1D95;--accent:#F59E0B;--success:#10B981;--danger:#EF4444;--warning:#F59E0B;--bg:#0F0A1E;--bg2:#1A1035;--bg3:#251848;--card:#1E1540;--border:#2D1F5E;--text:#E2D9FF;--text2:#9B8EC4;--text3:#6B5E9C;--white:#ffffff;}*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}.header{background:linear-gradient(135deg,var(--primary-dark),var(--bg2));border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}.logo{display:flex;align-items:center;gap:10px;}.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}.logo-text{font-weight:700;font-size:18px;color:var(--white);}.logo-sub{font-size:11px;color:var(--text2);}.header-actions{display:flex;gap:10px;align-items:center;}.beta-badge{background:var(--accent);color:#1a1a1a;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;}.feedback-btn{background:transparent;border:1px solid var(--primary-light);color:var(--primary-light);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all .2s;}.feedback-btn:hover{background:var(--primary);color:white;}.steps-nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;overflow-x:auto;gap:0;}.step-tab{padding:14px 20px;font-size:13px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:8px;transition:all .2s;}.step-tab:hover{color:var(--text2);}.step-tab.active{color:var(--primary-light);border-bottom-color:var(--primary-light);}.step-tab.completed{color:var(--success);}.step-num{width:20px;height:20px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}.step-tab.active .step-num{background:var(--primary);color:white;}.step-tab.completed .step-num{background:var(--success);color:white;}.main{padding:24px;max-width:900px;margin:0 auto;}.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}.card-title{font-size:16px;font-weight:700;color:var(--white);margin-bottom:6px;display:flex;align-items:center;gap:8px;}.card-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}.form-group{display:flex;flex-direction:column;gap:6px;}.form-group.full{grid-column:1 / -1;}label{font-size:13px;color:var(--text2);font-weight:500;}input,select,textarea{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:14px;outline:none;transition:border .2s;font-family:inherit;}input:focus,select:focus,textarea:focus{border-color:var(--primary-light);}input::placeholder,textarea::placeholder{color:var(--text3);}select option{background:var(--bg3);}textarea{resize:vertical;min-height:80px;}.btn{padding:11px 22px;border-radius:9px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:8px;}.btn-primary{background:var(--primary);color:white;}.btn-primary:hover{background:var(--primary-light);transform:translateY(-1px);}.btn-success{background:var(--success);color:white;}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}.btn-outline:hover{border-color:var(--primary-light);color:var(--primary-light);}.btn-accent{background:var(--accent);color:#1a1a1a;}.btn-sm{padding:7px 14px;font-size:12px;}.ai-block{background:linear-gradient(135deg,rgba(108,60,225,0.15),rgba(79,46,139,0.1));border:1px solid rgba(108,60,225,0.4);border-radius:12px;padding:20px;margin-bottom:16px;}.ai-block-title{font-size:13px;font-weight:700;color:var(--primary-light);margin-bottom:12px;display:flex;align-items:center;gap:6px;}.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}.metric-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}.metric-value{font-size:24px;font-weight:800;color:var(--white);}.metric-label{font-size:12px;color:var(--text2);margin-top:4px;}.metric-change{font-size:12px;margin-top:6px;}.metric-change.up{color:var(--success);}.metric-change.down{color:var(--danger);}.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);}table{width:100%;border-collapse:collapse;font-size:13px;}th{background:var(--bg3);padding:10px 14px;text-align:left;color:var(--text2);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}td{padding:10px 14px;border-top:1px solid var(--border);color:var(--text);}tr:hover td{background:rgba(108,60,225,0.05);}.scenario-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}.scenario-num{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;}.scenario-title{font-size:15px;font-weight:700;color:var(--white);margin-bottom:8px;}.scenario-text{font-size:13px;color:var(--text2);line-height:1.6;}.feedback-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}.tag{padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--text2);transition:all .2s;}.tag:hover,.tag.selected{background:var(--primary);border-color:var(--primary);color:white;}.progress-bar{background:var(--bg3);border-radius:10px;height:6px;overflow:hidden;margin-top:8px;}.progress-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--primary),var(--primary-light));transition:width .5s;}.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}.badge-success{background:rgba(16,185,129,0.15);color:var(--success);}.badge-warning{background:rgba(245,158,11,0.15);color:var(--warning);}.badge-danger{background:rgba(239,68,68,0.15);color:var(--danger);}.badge-info{background:rgba(108,60,225,0.15);color:var(--primary-light);}.dot{width:6px;height:6px;border-radius:50%;background:currentColor;}.report-day{border-left:3px solid var(--primary);padding-left:16px;margin-bottom:20px;}.report-date{font-size:12px;color:var(--text3);margin-bottom:8px;}.report-title{font-size:15px;font-weight:700;color:var(--white);margin-bottom:12px;}.loading{display:flex;align-items:center;justify-content:center;gap:12px;padding:40px;color:var(--text2);flex-direction:column;}.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--primary-light);border-radius:50%;animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;padding:20px;}.modal-overlay.open{display:flex;}.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:500px;width:100%;}.modal-title{font-size:18px;font-weight:700;color:var(--white);margin-bottom:8px;}.modal-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}.toast{position:fixed;bottom:24px;right:24px;background:var(--success);color:white;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:300;transform:translateY(100px);opacity:0;transition:all .3s;}.toast.show{transform:translateY(0);opacity:1;}.page{display:none;}.page.active{display:block;}.creative-item{display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--bg3);border-radius:8px;margin-bottom:8px;}.creative-num{background:var(--primary);color:white;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px;}.creative-text{font-size:13px;color:var(--text);line-height:1.5;}.creative-type{font-size:11px;color:var(--accent);font-weight:700;margin-bottom:3px;}.divider{height:1px;background:var(--border);margin:20px 0;}.flex{display:flex;}.gap-10{gap:10px;}.mt-16{margin-top:16px;}.text-sm{font-size:13px;color:var(--text2);}.text-xs{font-size:12px;color:var(--text3);}.font-bold{font-weight:700;color:var(--white);}@media (max-width:600px){.form-grid{grid-template-columns:1fr;}.main{padding:16px;}.metrics-grid{grid-template-columns:1fr 1fr;}}.hidden{display:none !important;}.auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;}.auth-screen.hidden{display:none;}.auth-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:420px;text-align:center;}.auth-logo{font-size:48px;margin-bottom:12px;}.auth-title{font-size:24px;font-weight:800;color:var(--white);margin-bottom:6px;}.auth-sub{font-size:14px;color:var(--text2);margin-bottom:28px;}.auth-btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s;margin-bottom:12px;}.auth-btn-google{background:#fff;color:#1a1a1a;}.auth-btn-google:hover{background:#f0f0f0;}.auth-btn-phone{background:var(--primary);color:#fff;}.auth-btn-phone:hover{background:var(--primary-light);}.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;color:var(--text3);font-size:13px;}.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border);}.auth-phone-form{display:none;}.auth-phone-form.show{display:block;}.auth-input{width:100%;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--white);font-size:15px;margin-bottom:12px;outline:none;}.auth-input:focus{border-color:var(--primary-light);}.auth-skip{font-size:12px;color:var(--text3);cursor:pointer;margin-top:8px;}.auth-skip:hover{color:var(--text2);}.onboard-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:998;}.onboard-screen.hidden{display:none;}.onboard-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:44px 36px;width:100%;max-width:480px;text-align:center;}.onboard-step{font-size:12px;color:var(--text3);margin-bottom:16px;letter-spacing:1px;}.onboard-q{font-size:22px;font-weight:800;color:var(--white);margin-bottom:10px;line-height:1.4;}.onboard-sub{font-size:14px;color:var(--text2);margin-bottom:32px;}.onboard-btns{display:flex;gap:14px;}.onboard-btn{flex:1;padding:18px 12px;border-radius:14px;border:2px solid var(--border);background:var(--bg3);color:var(--white);font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;}.onboard-btn:hover{border-color:var(--primary-light);background:var(--bg2);}.onboard-btn.yes{border-color:var(--success);}.onboard-btn.yes:hover{background:rgba(16,185,129,0.1);}.onboard-btn.no{border-color:var(--danger);}.onboard-btn.no:hover{background:rgba(239,68,68,0.08);}.tg-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:997;}.tg-screen.hidden{display:none;}.tg-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:44px 36px;width:100%;max-width:420px;text-align:center;}.tg-icon{font-size:64px;margin-bottom:16px;}.tg-title{font-size:22px;font-weight:800;color:var(--white);margin-bottom:10px;}.tg-text{font-size:14px;color:var(--text2);margin-bottom:28px;line-height:1.6;}.tg-btn{display:inline-flex;align-items:center;gap:10px;background:#229ED9;color:white;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:all .2s;}.tg-btn:hover{background:#1a8bc4;}.tg-back{font-size:12px;color:var(--text3);cursor:pointer;margin-top:16px;display:block;}.tg-back:hover{color:var(--text2);}@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}.loading-step{font-size:12px;color:var(--text2);padding:5px 0;border-bottom:1px solid var(--border);}.loading-step:last-child{border-bottom:none;}.loading-step.done{color:var(--success);}.loading-step.done::before{content:"✅ ";}.loading-step.active{color:var(--primary-light);}</style>
+</head>
+<body>
+
+<div class="auth-screen" id="auth-screen">
+ <div class="auth-box">
+ <div class="auth-logo">🎯</div>
+ <div class="auth-title">AI Targetolog</div>
+ <div class="auth-sub">Reklamangizni AI bilan boshqaring.<br>Kirish uchun ro'yxatdan o'ting.</div>
+
+ <button class="auth-btn auth-btn-google" onclick="authGoogle()">
+ <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+ Gmail bilan kirish
+ </button>
+
+ <div class="auth-divider">yoki</div>
+
+ <button class="auth-btn auth-btn-phone" onclick="showPhoneForm()">
+ 📱 Telefon raqam bilan
+ </button>
+
+ <div class="auth-phone-form" id="phone-form">
+ <input class="auth-input" type="tel" id="phone-input" placeholder="+998 90 123 45 67">
+ <button class="auth-btn auth-btn-phone" onclick="authPhone()" style="margin-top:0">
+ ✅ Davom etish
+ </button>
+ </div>
+
+ <div class="auth-skip" onclick="skipAuth()">Hozircha o'tkazib yuborish →</div>
+ </div>
+</div>
+
+<div class="onboard-screen hidden" id="onboard-screen">
+ <div class="onboard-box">
+ <div class="onboard-step">SAVOL 1 / 1</div>
+ <div class="onboard-q">Ilgari Facebook Ads Manager'da reklama yoqganmisiz?</div>
+ <div class="onboard-sub">Bu savol sizga mos yo'lni belgilaydi</div>
+ <div class="onboard-btns">
+ <button class="onboard-btn yes" onclick="onboardYes()">
+ ✅ Ha, yoqqanman
+ </button>
+ <button class="onboard-btn no" onclick="onboardNo()">
+ ❌ Yo'q, yangi boshlayman
+ </button>
+ </div>
+ </div>
+</div>
+
+<div class="onboard-screen hidden" id="access-screen">
+ <div class="onboard-box" style="max-width:500px;text-align:left">
+ <div class="onboard-step">ULANISH</div>
+ <div class="onboard-q" style="font-size:18px">Reklama akkauntingizni ulang</div>
+ <div class="onboard-sub" style="margin-bottom:20px">Quyidagi ma'lumotlarni kiriting — biz faqat tahlil uchun foydalanamiz</div>
+
+ <div style="margin-bottom:14px">
+ <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Ad Account ID <span style="color:var(--danger)">*</span></label>
+ <input id="acc-id" type="text" placeholder="act_123456789012345"
+ style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
+ border-radius:10px;color:var(--white);font-size:14px;outline:none;font-family:monospace">
+ <div style="font-size:11px;color:var(--text3);margin-top:5px">
+ 📍 Ads Manager → Akkaunt nomi ustiga bosing → ID ko'rinadi
+ </div>
+ </div>
+
+ <div style="margin-bottom:14px">
+ <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Business Manager ID <span style="color:var(--text3)">(ixtiyoriy)</span></label>
+ <input id="bm-id" type="text" placeholder="123456789012345"
+ style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
+ border-radius:10px;color:var(--white);font-size:14px;outline:none;font-family:monospace">
+ <div style="font-size:11px;color:var(--text3);margin-top:5px">
+ 📍 business.facebook.com → Settings → Business Info → ID
+ </div>
+ </div>
+
+ <div style="margin-bottom:20px">
+ <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Facebook Sahifa nomi</label>
+ <input id="page-name" type="text" placeholder="Masalan: Silk Road Boutique"
+ style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
+ border-radius:10px;color:var(--white);font-size:14px;outline:none">
+ </div>
+
+ <details style="margin-bottom:18px;background:rgba(108,60,225,0.08);border-radius:8px;padding:12px">
+ <summary style="font-size:13px;color:var(--primary-light);cursor:pointer;font-weight:700">
+ ❓ Ad Account ID ni qayerdan topaman?
+ </summary>
+ <div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.7">
+ <strong style="color:var(--white)">1-usul (eng tez):</strong><br>
+ ads.facebook.com → Sahifa yuklananda URL da ko'rinadi:<br>
+ <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:11px">act_<strong>123456789</strong></code><br><br>
+ <strong style="color:var(--white)">2-usul:</strong><br>
+ Ads Manager → Sozlamalar (⚙️) → Akkaunt sozlamalari → Akkaunt ID
+ </div>
+ </details>
+
+ <div style="display:flex;gap:10px">
+ <button onclick="backToOnboard()" style="flex:0 0 auto;padding:13px 18px;background:transparent;
+ border:1px solid var(--border);border-radius:10px;color:var(--text2);cursor:pointer;font-size:14px">
+ ← Orqaga
+ </button>
+ <button onclick="saveAccessAndContinue()" style="flex:1;padding:13px;background:var(--primary);
+ border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer">
+ ✅ Davom etish
+ </button>
+ </div>
+ </div>
+</div>
+
+<div class="tg-screen hidden" id="tg-screen">
+ <div class="tg-box">
+ <div class="tg-icon">✈️</div>
+ <div class="tg-title">Adminimizga murojaat qiling</div>
+ <div class="tg-text">
+ Facebook Ads Manager sozlash va birinchi reklamani yoqish uchun<br>
+ <strong style="color:var(--white)">mutaxassisimiz bepul yordam beradi.</strong><br><br>
+ Telegram'da admin bilan bog'laning 👇
+ </div>
+ <a class="tg-btn" href="https://t.me/energiya_ai_admin" target="_blank">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.88 13.375l-2.967-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.834.944l-.525-.76z"/></svg>
+ Telegram'da murojaat qiling
+ </a>
+ <span class="tg-back" onclick="backToOnboard()">← Orqaga qaytish</span>
+ </div>
+</div>
+
+<div class="onboard-screen hidden" id="analysis-prev-screen">
+ <div class="onboard-box" style="max-width:480px;text-align:center">
+
+ <div id="prev-idle-state">
+ <div style="font-size:56px;margin-bottom:16px">📊</div>
+ <div class="onboard-q" style="font-size:19px;margin-bottom:8px">Avvalgi reklamalarni tahlil qilish</div>
+ <div style="font-size:14px;color:var(--text2);margin-bottom:28px;line-height:1.6">
+ AI <strong style="color:var(--white)" id="show-acc-id"></strong> akkauntidagi<br>
+ oxirgi 30 kunlik kampaniyalarni Supermetrics orqali<br>
+ tortib, to'liq tahlil qiladi
+ </div>
+
+ <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:24px;text-align:left">
+ <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px">AI NIMALARGA QARAYDI:</div>
+ <div style="display:flex;flex-direction:column;gap:7px">
+ <div style="font-size:13px;color:var(--text2)">📈 Kampaniyalar: xarajat, reach, CTR, CPL</div>
+ <div style="font-size:13px;color:var(--text2)">🎯 Eng yaxshi va eng yomon ishlagan reklamalar</div>
+ <div style="font-size:13px;color:var(--text2)">💡 Qayerda budjet isrof bo'lgan</div>
+ <div style="font-size:13px;color:var(--text2)">⚡ Qanday o'zgarishlar eng katta ta'sir beradi</div>
+ </div>
+ </div>
+
+ <div style="display:flex;gap:10px">
+ <button onclick="document.getElementById('access-screen').classList.remove('hidden');document.getElementById('analysis-prev-screen').classList.add('hidden')"
+ style="flex:0 0 auto;padding:13px 16px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--text2);cursor:pointer;font-size:13px">
+ ← Orqaga
+ </button>
+ <button onclick="startPrevAnalysis()"
+ style="flex:1;padding:13px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer">
+ 🤖 Tahlilni boshlash
+ </button>
+ </div>
+ <div style="margin-top:12px">
+ <span onclick="skipPrevAnalysis()" style="font-size:12px;color:var(--text3);cursor:pointer">O'tkazib yuborish →</span>
+ </div>
+ </div>
+
+ <div id="prev-loading-state" style="display:none">
+ <div style="font-size:48px;margin-bottom:20px;animation:spin 2s linear infinite;display:inline-block">⚙️</div>
+ <div style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:8px">Tahlil qilinyapti...</div>
+ <div style="font-size:13px;color:var(--text2);margin-bottom:20px" id="loading-step-text">Supermetrics orqali ma'lumotlar tortilmoqda</div>
+ <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:left">
+ <div class="loading-step active" id="ls-1">⏳ Akkaunt ma'lumotlari yuklanmoqda...</div>
+ <div class="loading-step" id="ls-2" style="color:var(--text3)">⏳ Kampaniyalar tahlil qilinmoqda...</div>
+ <div class="loading-step" id="ls-3" style="color:var(--text3)">⏳ AI feedback tayyorlanmoqda...</div>
+ </div>
+ <div style="margin-top:20px">
+ <button onclick="skipPrevAnalysis()" style="padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer;font-size:13px">
+ O'tkazib yuborish
+ </button>
+ </div>
+ </div>
+
+ </div>
+</div>
+
+<div class="header" id="main-header" style="display:none">
+ <div class="logo">
+ <div class="logo-icon">🎯</div>
+ <div>
+ <div class="logo-text">AI Targetolog</div>
+ <div class="logo-sub">by Energiya AI</div>
+ </div>
+ </div>
+ <div class="header-actions">
+ <span class="beta-badge">BETA v0.1</span>
+ <button class="feedback-btn" onclick="openFeedback()">💬 Fikr bildirish</button>
+ </div>
+</div>
+
+<div class="steps-nav" id="main-steps" style="display:none">
+ <div class="step-tab active" id="tab-1" onclick="goStep(1)">
+ <span class="step-num">1</span> Biznes ma'lumotlari
+ </div>
+ <div class="step-tab" id="tab-2" onclick="goStep(2)">
+ <span class="step-num">2</span> AI Tahlil & Prognoz
+ </div>
+ <div class="step-tab" id="tab-3" onclick="goStep(3)">
+ <span class="step-num">3</span> Kampaniya boshlash
+ </div>
+ <div class="step-tab" id="tab-4" onclick="goStep(4)">
+ <span class="step-num">4</span> Kunlik hisobotlar
+ </div>
+ <div class="step-tab" id="tab-5" onclick="goStep(5)">
+ <span class="step-num">5</span> Optimizatsiya
+ </div>
+</div>
+
+<div class="main" id="main-content" style="display:none">
+
+ <div class="page active" id="page-1">
+ <div class="card">
+ <div class="card-title">📋 Biznes ma'lumotlari</div>
+ <div class="card-sub">AI tahlil qilishi uchun biznesingiz haqida to'liq ma'lumot bering</div>
+
+ <div class="form-grid">
+ <div class="form-group">
+ <label>Nisha (soha)</label>
+ <select id="nisha">
+ <option value="">— Tanlang —</option>
+ <option>Kiyim-kechak</option>
+ <option>Oziq-ovqat / Restoran</option>
+ <option>Go'zallik / Kosmetika</option>
+ <option>Qurilish / Ta'mirlash</option>
+ <option>Ta'lim / Kurslar</option>
+ <option>Sog'liqni saqlash / Fitnes</option>
+ <option>Turizm / Sayohat</option>
+ <option>Ko'chmas mulk</option>
+ <option>Elektronika</option>
+ <option>Xizmatlar (B2B/B2C)</option>
+ <option>Boshqa</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label>Biznes nomi</label>
+ <input type="text" id="biz-name" placeholder="Masalan: Silk Road Boutique">
+ </div>
+
+ <div class="form-group full">
+ <label>Mahsulot / Taklif (offer)</label>
+ <textarea id="offer" placeholder="Nima sotasiz? Asosiy afzallik nima? Narx qancha?"></textarea>
+ </div>
+
+ <div class="form-group">
+ <label>Oylik reklama budjeti (USD)</label>
+ <input type="number" id="budget" placeholder="Masalan: 500">
+ </div>
+
+ <div class="form-group">
+ <label>Geografiya</label>
+ <select id="geo">
+ <option value="">— Tanlang —</option>
+ <option>O'zbekiston (barcha)</option>
+ <option>Toshkent shahri</option>
+ <option>Toshkent viloyati</option>
+ <option>Samarqand viloyati</option>
+ <option>Farg'ona viloyati</option>
+ <option>Andijon viloyati</option>
+ <option>Buxoro viloyati</option>
+ <option>Namangan viloyati</option>
+ <option>Qashqadaryo viloyati</option>
+ <option>O'zbekiston + Qozog'iston</option>
+ <option>MDH mamlakatlari</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label>Asosiy maqsad (kampaniya turi)</label>
+ <select id="goal">
+ <option value="">— Tanlang —</option>
+ <option>Sotuvni oshirish (konversiya)</option>
+ <option>Lead (so'rovlar) yig'ish</option>
+ <option>Brend taniqliligini oshirish</option>
+ <option>Onlayn do'kon trafigi</option>
+ <option>Messenger / Telegram orqali savdo</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label>Joriy aylanuv (oylik, USD)</label>
+ <input type="number" id="revenue" placeholder="Masalan: 3000">
+ </div>
+
+ <div class="form-group">
+ <label>Kutilayotgan oylik sotuv o'sishi</label>
+ <select id="target-growth">
+ <option>+20%</option>
+ <option>+50%</option>
+ <option>+100% (2x)</option>
+ <option>+200% (3x)</option>
+ <option>Shart emas, brend taniqlilik</option>
+ </select>
+ </div>
+
+ <div class="form-group">
+ <label>Leaddan sotuvga konversiya (%)</label>
+ <input type="number" id="conversion" placeholder="Masalan: 4 (har 100 leaddan 4 ta sotuv)">
+ </div>
+
+ <div class="form-group full">
+ <label>Asosiy muammo / hozirgi holat</label>
+ <textarea id="pain" placeholder="Hozir qanday reklama ishlatyapsiz? Nima ishlamayapti? Qayerda to'silib qolgan?"></textarea>
+ </div>
+ </div>
+
+ <div class="divider"></div>
+
+ <div style="margin-bottom:20px">
+ <div class="card-title" style="margin-bottom:4px;font-size:15px">👤 Mijoz Portreti <span style="font-size:12px;color:var(--text3);font-weight:400">(ixtiyoriy, lekin muhim)</span></div>
+ <div class="card-sub" style="margin-bottom:14px">Ideal mijozingizni qancha aniq bilsangiz, AI shuncha aniq tahlil beradi</div>
+ <div class="form-grid">
+ <div class="form-group">
+ <label>Ideal mijoz yoshi</label>
+ <input type="text" id="mijoz-yosh" placeholder="Masalan: 25–40 yosh">
+ </div>
+ <div class="form-group">
+ <label>Jins</label>
+ <select id="mijoz-jins">
+ <option value="">— Farq qilmaydi —</option>
+ <option>Asosan ayollar</option>
+ <option>Asosan erkaklar</option>
+ <option>Teng</option>
+ </select>
+ </div>
+ <div class="form-group full">
+ <label>Mijozning asosiy og'riq nuqtasi (kechasi uxlay olmasligiga sabab)</label>
+ <input type="text" id="mijoz-pain" placeholder="Masalan: Vaqtim yo'q, lekin yaxshi ko'rinishim kerak">
+ </div>
+ <div class="form-group full">
+ <label>Mijoz mahsulotingizdan keyin hayotini qanday tasavvur qiladi?</label>
+ <input type="text" id="mijoz-dream" placeholder="Masalan: Ertangi kunidan xotirjam, oilam bilan vaqt o'tkazaman">
+ </div>
+ </div>
+ </div>
+
+ <div class="flex gap-10" style="justify-content:flex-end">
+ <button class="btn btn-primary" onclick="runAnalysis()">🔍 AI Tahlil qilsin →</button>
+ </div>
+ </div>
+ </div>
+
+ <div class="page" id="page-2">
+ <div id="analysis-loading" class="loading">
+ <div class="spinner"></div>
+ <div>AI nishangizni tahlil qilyapti...</div>
+ <div class="text-xs">30-60 soniya</div>
+ </div>
+
+ <div id="analysis-result" style="display:none">
+
+ <div class="ai-block">
+ <div class="ai-block-title">🤖 AI Tahlil xulosasi</div>
+ <div id="ai-summary" class="text-sm" style="line-height:1.7"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">📊 Prognoz ko'rsatkichlari (30 kun)</div>
+ <div class="card-sub">Berilgan budjet va nishaga asoslanib hisoblangan taxminiy natijalar</div>
+ <div class="metrics-grid" id="forecast-metrics"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">🎨 Kerakli Creativlar soni va turi</div>
+ <div class="card-sub">Maksimal natija uchun quyidagi creative to'plami tavsiya etiladi</div>
+ <div id="creative-list"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">💰 Budjet taqsimoti tavsiyasi</div>
+ <div id="budget-split"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">⚠️ Xatarlar va Feedbacklar</div>
+ <div id="ai-risks"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">🔢 Kunlik Voronka Metrikasi</div>
+ <div class="card-sub">Qisqa voronka — har kuni kuzatadigan asosiy ko'rsatkichlar</div>
+ <div id="funnel-metrics"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">🛡️ Blokdan Himoyalanish Cheklisti</div>
+ <div class="card-sub">Kampaniya boshlashdan avval barcha bandlarni bajarib chiqing</div>
+ <div id="block-checklist"></div>
+ </div>
+
+ <div class="flex gap-10" style="justify-content:flex-end">
+ <button class="btn btn-outline" onclick="goStep(1)">← Tahrirlash</button>
+ <button class="btn btn-primary" onclick="goStep(3)">Kampaniya boshlash →</button>
+ </div>
+ </div>
+ </div>
+
+ <div class="page" id="page-3">
+ <div class="card">
+ <div class="card-title">🚀 Kampaniya sozlamalari</div>
+ <div class="card-sub">Meta Ads kampaniyangizni sozlang va ishga tushiring</div>
+
+ <div class="form-grid">
+ <div class="form-group full">
+ <label>Kampaniya nomi</label>
+ <input type="text" id="camp-name" placeholder="Masalan: Silk Road — Yoz kolleksiyasi — Konversiya">
+ </div>
+ <div class="form-group">
+ <label>Kampaniya maqsadi</label>
+ <select id="camp-objective">
+ <option>CONVERSIONS</option>
+ <option>LEAD_GENERATION</option>
+ <option>TRAFFIC</option>
+ <option>BRAND_AWARENESS</option>
+ <option>MESSAGES</option>
+ </select>
+ </div>
+ <div class="form-group">
+ <label>Kunlik budjet (USD)</label>
+ <input type="number" id="daily-budget" placeholder="Masalan: 20">
+ </div>
+ <div class="form-group">
+ <label>Boshlash sanasi</label>
+ <input type="date" id="start-date">
+ </div>
+ <div class="form-group">
+ <label>Tugash sanasi (ixtiyoriy)</label>
+ <input type="date" id="end-date">
+ </div>
+ <div class="form-group full">
+ <label>Landing page / Havolangiz</label>
+ <input type="url" id="landing" placeholder="https://...">
+ </div>
+ </div>
+
+ <div class="divider"></div>
+
+ <div class="card-title" style="margin-bottom:12px">👥 Auditoriya segmentlari (AI tavsiyasi)</div>
+ <div id="audience-segments"></div>
+
+ <div class="divider"></div>
+ <div class="card-title" style="margin-bottom:12px">📁 Creative yuklash</div>
+ <div style="background:var(--bg3);border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer" onclick="showToast('Hozircha demo mode — fayl yuklash keyinroq qo\'shiladi')">
+ <div style="font-size:32px;margin-bottom:8px">📎</div>
+ <div class="text-sm">Rasm yoki video creative yuklang</div>
+ <div class="text-xs">JPG, PNG, MP4 • Maks 4 GB</div>
+ </div>
+
+ <div class="divider"></div>
+ <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:16px;margin-bottom:20px">
+ <div style="font-size:13px;color:var(--accent);font-weight:700;margin-bottom:6px">⚡ Beta mode</div>
+ <div class="text-sm">Hozircha kampaniya Meta Ads bilan ulangan emas. Keyingi versiyada to'g'ridan-to'g'ri Meta Ads Manager'ga yuboriladi. <strong>Demo natijalarni ko'rish uchun quyidagi tugmani bosing.</strong></div>
+ </div>
+
+ <div class="flex gap-10" style="justify-content:flex-end">
+ <button class="btn btn-outline" onclick="goStep(2)">← Orqaga</button>
+ <button class="btn btn-success" onclick="launchCampaign()">✅ Kampaniyani yoqish →</button>
+ </div>
+ </div>
+ </div>
+
+ <div class="page" id="page-4">
+ <div class="card">
+ <div class="card-title">📈 Kampaniya holati</div>
+ <div class="metrics-grid">
+ <div class="metric-card">
+ <div class="metric-value" style="color:var(--success)">$<span id="m-spend">0</span></div>
+ <div class="metric-label">Sarflangan (USD)</div>
+ <div class="metric-change up">↑ Budjet ishlatyapti</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" id="m-reach">0</div>
+ <div class="metric-label">Qamrab oldi (Reach)</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" id="m-clicks">0</div>
+ <div class="metric-label">Kliklari</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" style="color:var(--accent)">$<span id="m-cpc">0</span></div>
+ <div class="metric-label">Klik narxi (CPC)</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" id="m-leads">0</div>
+ <div class="metric-label">Leadlar</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" style="color:var(--primary-light)">$<span id="m-cpl">0</span></div>
+ <div class="metric-label">Lead narxi (CPL)</div>
+ </div>
+ </div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">📅 Kunlik hisobotlar</div>
+ <div id="daily-reports"></div>
+ </div>
+ </div>
+
+ <div class="page" id="page-5">
+ <div class="card">
+ <div class="card-title">🔧 AI Optimizatsiya Tavsiyalari</div>
+ <div class="card-sub">Meta algoritm, kunlik faoliyat, traffik harorati va scale strategiyasi</div>
+ <div id="opt-recommendations"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">🎬 Creative Ssenariylar (Traffik haroratiga qarab)</div>
+ <div class="card-sub">Sovuq → Iliq → Issiq trafik uchun alohida ssenariylar + 15-qadam copywriting</div>
+ <div id="creative-scenarios"></div>
+ </div>
+
+ <div class="card">
+ <div class="card-title">⚖️ Stavkalar Strategiyasi</div>
+ <div class="card-sub">Qaysi holatda qaysi bidding strategiyasini ishlating</div>
+ <div id="stavkalar-section"></div>
+ </div>
+ </div>
+
+</div>
+
+<div class="modal-overlay" id="feedback-modal">
+ <div class="modal">
+ <div class="modal-title">💬 Fikr bildirish</div>
+ <div class="modal-sub">Sizning fikringiz ushbu agentni yaxshilashga yordam beradi</div>
+
+ <div class="form-group" style="margin-bottom:14px">
+ <label>Qaysi bosqichda muammo bor?</label>
+ <div class="feedback-tags" id="feedback-step-tags">
+ <span class="tag" onclick="toggleTag(this)">1. Ma'lumot kiritish</span>
+ <span class="tag" onclick="toggleTag(this)">2. Tahlil natijasi</span>
+ <span class="tag" onclick="toggleTag(this)">3. Kampaniya</span>
+ <span class="tag" onclick="toggleTag(this)">4. Hisobotlar</span>
+ <span class="tag" onclick="toggleTag(this)">5. Optimizatsiya</span>
+ <span class="tag" onclick="toggleTag(this)">Umumiy fikr</span>
+ </div>
+ </div>
+
+ <div class="form-group" style="margin-bottom:14px">
+ <label>Muammo turi</label>
+ <div class="feedback-tags">
+ <span class="tag" onclick="toggleTag(this)">🐛 Xatolik</span>
+ <span class="tag" onclick="toggleTag(this)">😕 Tushunarsiz</span>
+ <span class="tag" onclick="toggleTag(this)">➕ Yangi funksiya</span>
+ <span class="tag" onclick="toggleTag(this)">✅ Yaxshi ishlaydi</span>
+ </div>
+ </div>
+
+ <div class="form-group">
+ <label>Batafsil (ixtiyoriy)</label>
+ <textarea id="feedback-text" placeholder="Nima ishladi? Nima ishlamadi? Qanday bo'lishi kerak?" style="min-height:100px"></textarea>
+ </div>
+
+ <div class="modal-footer">
+ <button class="btn btn-outline btn-sm" onclick="closeFeedback()">Bekor qilish</button>
+ <button class="btn btn-primary btn-sm" onclick="submitFeedback()">📤 Yuborish</button>
+ </div>
+ </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== AUTH & ONBOARDING =====
+function showMainApp() {
+ document.getElementById('main-header').style.display = 'flex';
+ document.getElementById('main-steps').style.display = 'flex';
+ document.getElementById('main-content').style.display = 'block';
+}
+
+function authGoogle() {
+ // Demo: real proyektda Google OAuth bilan
+ document.getElementById('auth-screen').classList.add('hidden');
+ document.getElementById('onboard-screen').classList.remove('hidden');
+}
+
+function showPhoneForm() {
+ document.getElementById('phone-form').classList.toggle('show');
+}
+
+function authPhone() {
+ const phone = document.getElementById('phone-input').value.trim();
+ if (!phone || phone.length < 9) {
+ showToast('⚠️ To\'g\'ri telefon raqam kiriting', 'warning'); return;
+ }
+ document.getElementById('auth-screen').classList.add('hidden');
+ document.getElementById('onboard-screen').classList.remove('hidden');
+}
+
+function skipAuth() {
+ document.getElementById('auth-screen').classList.add('hidden');
+ document.getElementById('onboard-screen').classList.remove('hidden');
+}
+
+function onboardYes() {
+ document.getElementById('onboard-screen').classList.add('hidden');
+ document.getElementById('access-screen').classList.remove('hidden');
+}
+
+function saveAccessAndContinue() {
+ var accId = document.getElementById('acc-id').value.trim();
+ if (!accId) {
+ document.getElementById('acc-id').style.borderColor = 'var(--danger)';
+ return;
+ }
+ if (!accId.startsWith('act_')) accId = 'act_' + accId;
+ var bmId = document.getElementById('bm-id').value.trim();
+ var pageName = document.getElementById('page-name').value.trim();
+ state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName };
+ if (pageName && document.getElementById('biz-name')) {
+ document.getElementById('biz-name').value = pageName;
+ }
+ // Tahlil ekraniga o't va akkaunt ID ni ko'rsat
+ document.getElementById('access-screen').classList.add('hidden');
+ document.getElementById('analysis-prev-screen').classList.remove('hidden');
+ var showEl = document.getElementById('show-acc-id');
+ if (showEl) showEl.textContent = accId;
+}
+
+function skipPrevAnalysis() {
+ document.getElementById('analysis-prev-screen').classList.add('hidden');
+ showMainApp();
+ showToast('✅ Akkaunt ulandi: ' + (state.fbAccess ? state.fbAccess.accId : ''));
+}
+
+function startPrevAnalysis() {
+ var accId = state.fbAccess ? state.fbAccess.accId : '';
+ if (!accId) { skipPrevAnalysis(); return; }
+
+ // Loading holatiga o't
+ document.getElementById('prev-idle-state').style.display = 'none';
+ document.getElementById('prev-loading-state').style.display = 'block';
+
+ // Loading steps animatsiyasi
+ var steps = ['ls-1', 'ls-2', 'ls-3'];
+ var texts = [
+ 'Supermetrics orqali ma\'lumotlar tortilmoqda',
+ 'Kampaniyalar tahlil qilinmoqda',
+ 'AI feedback tayyorlanmoqda'
+ ];
+ var i = 0;
+ var stepTimer = setInterval(function() {
+ if (i > 0) {
+ document.getElementById(steps[i-1]).classList.remove('active');
+ document.getElementById(steps[i-1]).classList.add('done');
+ document.getElementById(steps[i-1]).textContent = texts[i-1].replace('⏳ ', '');
+ }
+ if (i < steps.length) {
+ document.getElementById(steps[i]).classList.add('active');
+ document.getElementById(steps[i]).classList.remove('');
+ document.getElementById('loading-step-text').textContent = texts[i];
+ i++;
+ } else {
+ clearInterval(stepTimer);
+ }
+ }, 1200);
+
+ // sendPrompt orqali Claude ga Supermetrics so'rovi
+ var bmId = state.fbAccess.bmId ? ' | BM ID: ' + state.fbAccess.bmId : '';
+ var prompt = 'AI Targetolog: ' + accId + bmId + ' Facebook reklama akkauntidagi oxirgi 30 kunlik kampaniyalarni Supermetrics (ds_id="FA") orqali tortib, quyidagilarni tahlil qil va o\'zbek tilida feedback ber:\n' +
+ '1. Jami xarajat, reach, CPL, CTR, ROAS\n' +
+ '2. Eng yaxshi va eng yomon ishlagan kampaniya/creative\n' +
+ '3. Budjet isrof bo\'lgan joylar\n' +
+ '4. Qaysi auditoriya eng yaxshi natija bergan\n' +
+ '5. 3 ta eng muhim tavsiya\n' +
+ 'Natijalarni qisqa, aniq va amaliy qilib ber.';
+
+ setTimeout(function() {
+ clearInterval(stepTimer);
+ // Barcha steplarni done qil
+ steps.forEach(function(s, idx) {
+ var el = document.getElementById(s);
+ el.classList.remove('active');
+ el.classList.add('done');
+ el.textContent = texts[idx];
+ });
+
+ // sendPrompt mavjud bo'lsa ishlatamiz
+ if (typeof sendPrompt === 'function') {
+ sendPrompt(prompt);
+ document.getElementById('loading-step-text').textContent = "Tahlil chatda ko'rinadi ↑";
+ setTimeout(function() {
+ skipPrevAnalysis();
+ }, 2000);
+ } else {
+ // Fallback: clipboard ga copy
+ if (navigator.clipboard) {
+ navigator.clipboard.writeText(prompt).then(function() {
+ document.getElementById('loading-step-text').textContent = "So'rov clipboard ga ko'chirildi — Claude chatga joylashtiring";
+ });
+ }
+ setTimeout(function() { skipPrevAnalysis(); }, 3000);
+ }
+ }, 4000);
+}
+
+function analyzePrevCampaigns() {
+ var spend = parseFloat(document.getElementById('prev-spend').value) || 0;
+ var leads = parseFloat(document.getElementById('prev-leads').value) || 0;
+ var sales = parseFloat(document.getElementById('prev-sales').value) || 0;
+ var ctr = parseFloat(document.getElementById('prev-ctr').value) || 0;
+ var reach = parseFloat(document.getElementById('prev-reach').value) || 0;
+ var nisha = document.getElementById('prev-nisha').value;
+
+ if (!spend && !leads) {
+ showToast('Kamida xarajat va lidlar sonini kiriting', 'warning'); return;
+ }
+
+ // Hisob-kitoblar
+ var cpl = leads > 0 ? (spend / leads).toFixed(2) : null;
+ var convR = leads > 0 && sales > 0 ? ((sales / leads) * 100).toFixed(1) : null;
+ var cpm = reach > 0 ? ((spend / reach) * 1000).toFixed(2) : null;
+ var roas = sales > 0 && spend > 0 ? (sales / spend * 10).toFixed(1) : null; // taxminiy
+
+ // Benchmark (O'zbekiston uchun)
+ var benchCPL = { low: 1, good: 3, high: 8 };
+ var benchCTR = { low: 0.8, good: 1.5, high: 3 };
+ var benchConv = { low: 2, good: 5, high: 15 };
+
+ // Baho tizimi
+ var score = 0, maxScore = 0;
+ var feedback = [];
+ var warnings = [];
+ var wins = [];
+
+ // CPL tahlili
+ if (cpl !== null) {
+ maxScore += 30;
+ var cplNum = parseFloat(cpl);
+ if (cplNum <= benchCPL.good) {
+ score += 30;
+ wins.push("CPL $" + cpl + " — ajoyib! Benchmark'dan past.");
+ } else if (cplNum <= benchCPL.high) {
+ score += 15;
+ feedback.push("CPL $" + cpl + " — yuqoriroq. Maqsad: $" + benchCPL.good + " dan past. Creative yoki audience o'zgartiring.");
+ } else {
+ warnings.push("CPL $" + cpl + " — juda yuqori. Landing page yoki offer muammosi bo'lishi mumkin.");
+ }
+ }
+
+ // CTR tahlili
+ if (ctr > 0) {
+ maxScore += 25;
+ if (ctr >= benchCTR.good) {
+ score += 25;
+ wins.push("CTR " + ctr + "% — yaxshi. Creative auditoriyaga mos kelmoqda.");
+ } else if (ctr >= benchCTR.low) {
+ score += 12;
+ feedback.push("CTR " + ctr + "% — past. Hook (birinchi 3 sek) kuchaytiring. Maqsad: 1.5%+");
+ } else {
+ warnings.push("CTR " + ctr + "% — juda past. Audience yoki creative to'liq almashtirilishi kerak.");
+ }
+ }
+
+ // Konversiya tahlili
+ if (convR !== null) {
+ maxScore += 25;
+ var convNum = parseFloat(convR);
+ if (convNum >= benchConv.good) {
+ score += 25;
+ wins.push("Lid → Sotuv konversiyasi " + convR + "% — a'lo. Sotuv jarayoni yaxshi ishlayapti.");
+ } else if (convNum >= benchConv.low) {
+ score += 12;
+ feedback.push("Konversiya " + convR + "% — past. Call center skriptini yaxshilang. Follow-up qo'shing.");
+ } else {
+ warnings.push("Konversiya " + convR + "% — kritik past. Sotuv jarayonida katta muammo bor.");
+ }
+ }
+
+ // Budjet samaradorligi
+ if (spend > 0 && leads > 0) {
+ maxScore += 20;
+ var efficiency = leads / spend;
+ if (efficiency >= 0.2) { score += 20; wins.push("Budjet samaradorligi yaxshi — $1 ga " + efficiency.toFixed(2) + " ta lid."); }
+ else if (efficiency >= 0.1) { score += 10; feedback.push("Budjet samaradorligini oshirish mumkin. Lookalike auditoriya sinang."); }
+ else { warnings.push("Kam lid, ko'p xarajat. Audience yoki offer to'liq qayta ko'rib chiqilsin."); }
+ }
+
+ var pct = maxScore > 0 ? Math.round(score / maxScore * 100) : 0;
+ var grade = pct >= 80 ? 'A' : pct >= 60 ? 'B' : pct >= 40 ? 'C' : 'D';
+ var gradeColor = grade === 'A' ? 'var(--success)' : grade === 'B' ? '#3B82F6' : grade === 'C' ? 'var(--warning)' : 'var(--danger)';
+ var gradeMsg = grade === 'A' ? 'Reklamalar yaxshi ishlayapti!' : grade === 'B' ? 'Yaxshi, lekin yaxshilash mumkin' : grade === 'C' ? "Jiddiy o'zgarishlar kerak" : 'Reklamalar samarasiz — tizimni qayta qurish kerak';
+
+ var html = '<div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:0">';
+
+ // Umumiy baho
+ html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">';
+ html += '<div style="width:64px;height:64px;border-radius:50%;background:' + gradeColor + ';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;flex-shrink:0">' + grade + '</div>';
+ html += '<div><div style="font-size:16px;font-weight:700;color:var(--white)">' + gradeMsg + '</div>';
+ html += '<div style="font-size:13px;color:var(--text2);margin-top:4px">Umumiy ball: ' + pct + '/100</div>';
+ if (cpl) html += '<div style="font-size:12px;color:var(--text3)">CPL: $' + cpl + (convR ? ' | Konversiya: ' + convR + '%' : '') + '</div>';
+ html += '</div></div>';
+
+ // Yutuqlar
+ if (wins.length > 0) {
+ html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--success);margin-bottom:6px">✅ YAXSHI TOMONLAR</div>';
+ wins.forEach(function(w) {
+ html += '<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(16,185,129,0.08);border-radius:6px;margin-bottom:4px">✓ ' + w + '</div>';
+ });
+ html += '</div>';
+ }
+
+ // Tavsiyalar
+ if (feedback.length > 0) {
+ html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--warning);margin-bottom:6px">🔧 YAXSHILASH KERAK</div>';
+ feedback.forEach(function(f) {
+ html += '<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(245,158,11,0.08);border-radius:6px;margin-bottom:4px">→ ' + f + '</div>';
+ });
+ html += '</div>';
+ }
+
+ // Ogohlantirishlar
+ if (warnings.length > 0) {
+ html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">⚠️ MUAMMOLAR</div>';
+ warnings.forEach(function(w) {
+ html += '<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(239,68,68,0.08);border-radius:6px;margin-bottom:4px">⚡ ' + w + '</div>';
+ });
+ html += '</div>';
+ }
+
+ html += '<div style="margin-top:10px;padding:10px;background:rgba(108,60,225,0.1);border-radius:8px;font-size:12px;color:var(--primary-light)">💡 <strong>Keyingi qadam:</strong> Quyidagi dashboardda yangi kampaniya strategiyasini tuzing.</div>';
+ html += '</div>';
+
+ var resultEl = document.getElementById('prev-analysis-result');
+ resultEl.innerHTML = html;
+ resultEl.style.display = 'block';
+
+ // State ga saqla
+ state.prevAnalysis = { spend: spend, leads: leads, sales: sales, ctr: ctr, cpl: cpl, grade: grade, pct: pct };
+ if (nisha && document.getElementById('nisha')) document.getElementById('nisha').value = nisha;
+
+ // "Davom etish" tugmasini ko'rsatish
+ document.querySelector('#analysis-prev-screen .onboard-btns-row') &&
+ document.querySelector('#analysis-prev-screen .onboard-btns-row').classList.remove('hidden');
+}
+
+function onboardNo() {
+ // Hech reklama yoqmagan — Telegram ga yo'naltir
+ document.getElementById('onboard-screen').classList.add('hidden');
+ document.getElementById('tg-screen').classList.remove('hidden');
+}
+
+function backToOnboard() {
+ document.getElementById('tg-screen').classList.add('hidden');
+ document.getElementById('onboard-screen').classList.remove('hidden');
+}
+
+// ===== STATE =====
+let state = {
+ step: 1,
+ completed: [],
+ bizData: {},
+ campaignActive: false
+};
+
+// ===== NAVIGATION =====
+function goStep(n) {
+ document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+ document.querySelectorAll('.step-tab').forEach(t => t.classList.remove('active'));
+ document.getElementById('page-' + n).classList.add('active');
+ document.getElementById('tab-' + n).classList.add('active');
+ state.step = n;
+}
+
+// ===== STEP 1 → STEP 2 =====
+function runAnalysis() {
+ const nisha = document.getElementById('nisha').value;
+ const budget = parseFloat(document.getElementById('budget').value);
+ const geo = document.getElementById('geo').value;
+ const goal = document.getElementById('goal').value;
+ const offer = document.getElementById('offer').value;
+ const conversion = parseFloat(document.getElementById('conversion').value) || 4;
+ const bizName = document.getElementById('biz-name').value || 'Sizning biznesingiz';
+ // CPA — budjetdan avtomatik hisoblash (budjet / kutilgan lidlar)
+ const estLeads = Math.round((budget / 30) / 1.8 * 1000 * 1.5 / 100);
+ const cpa = estLeads > 0 ? parseFloat((budget / estLeads).toFixed(2)) : 5;
+
+ if (!nisha || !budget || !geo || !goal) {
+ showToast('⚠️ Iltimos, barcha majburiy maydonlarni to\'ldiring', 'warning'); return;
+ }
+
+ state.bizData = { nisha, budget, geo, goal, offer, cpa, conversion, bizName };
+ goStep(2);
+
+ document.getElementById('analysis-loading').style.display = 'flex';
+ document.getElementById('analysis-result').style.display = 'none';
+ document.getElementById('tab-2').classList.add('active');
+ document.getElementById('tab-1').classList.remove('active');
+ document.getElementById('tab-1').classList.add('completed');
+
+ setTimeout(() => generateAnalysis(), 2500);
+}
+
+function generateAnalysis() {
+ const d = state.bizData;
+ const dailyBudget = d.budget / 30;
+ const estReach = Math.round(dailyBudget * 1200);
+ const estClicks = Math.round(dailyBudget * 35);
+ const estLeads = Math.round(estClicks * (d.conversion / 100));
+ const estCPL = (d.budget / (estLeads * 30)).toFixed(2);
+ const estROAS = (d.conversion * 2.1).toFixed(1);
+ const needCreatives = d.budget < 300 ? 3 : d.budget < 700 ? 6 : 10;
+
+ // AI Summary — Maslow + voronka + kampaniya nomi
+ const maslow = MASLOW[d.nisha] || { daraja: 3, motiv: 'Qulaylik', trigger: 'Muammo → Yechim' };
+ const funnel = getFunnelMetrics(d);
+ const campName = getCampaignName(d);
+ const ct = CAMPAIGN_TYPES[d.goal] || {};
+
+ document.getElementById('ai-summary').innerHTML = `
+ <strong style="color:var(--white)">${d.bizName}</strong> — <em>${d.nisha}</em> nishasida ishlaydi.
+ Oylik <strong>$${d.budget}</strong> budjet | <strong>${d.geo}</strong> | Maqsad: <strong>${goal2text(d.goal)}</strong><br><br>
+
+ <div style="background:rgba(108,60,225,0.12);border-radius:8px;padding:12px;margin:10px 0">
+ <strong style="color:var(--accent)">🧠 Maslow Tahlili (${maslow.daraja}-daraja ehtiyoj)</strong><br>
+ <span style="color:var(--text2)">Asosiy motiv:</span> <strong>${maslow.motiv}</strong><br>
+ <span style="color:var(--text2)">Hook strategiyasi:</span> "${maslow.trigger}"<br>
+ <span style="color:var(--text2)">Matn formati:</span> AIDA — Attention → Interest → Desire → Action
+ </div>
+
+ <div style="background:rgba(16,185,129,0.08);border-radius:8px;padding:12px;margin:10px 0">
+ <strong style="color:var(--success)">📊 Raqobat & Bozor</strong><br>
+ ${d.nisha} nishasida Meta Ads raqobati: ${raqobat(d.nisha)}<br>
+ O'rtacha CPL: <strong>${d.geo.includes('Toshkent') ? '$2–5' : '$3–8'}</strong> |
+ Maqsad CPL: <strong style="color:${d.cpa > 4 ? 'var(--success)' : 'var(--warning)'}">$${d.cpa} ${d.cpa > 4 ? '✅ Realistik' : '⚠️ Qiyin'}</strong>
+ </div>
+
+ <div style="background:rgba(245,158,11,0.08);border-radius:8px;padding:12px;margin:10px 0">
+ <strong style="color:var(--accent)">⚡ Kampaniya Strategiyasi</strong><br>
+ Tavsiya etilgan objective: <strong>${ct.objective || 'CONVERSIONS'}</strong>${ct.pixel ? ' + Pixel majburiy' : ''}<br>
+ CBO: <strong>${ct.cboTavsiya && d.budget > 300 ? '✅ Yoqing' : '❌ Shart emas'}</strong> |
+ Min kunlik budjet: <strong>$${ct.minBudget || 10}/kun per ad set</strong><br>
+ Kampaniya nomi: <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:12px">${campName}</code>
+ </div>
+
+ <strong>📌 Xulosa:</strong> ${d.budget < 200 ?
+ '⚠️ Budjet oz — max 2 ta ad set, 1 ta kuchli creative bilan boring. Learning phase uchun kamida $10/kun kerak.' :
+ d.budget < 500 ?
+ '✅ O\'rta budjet — 3–4 ta ad set, har biriga 2 ta creative. A/B test o\'tkazing.' :
+ '🚀 Yaxshi budjet — CBO yoqing, Lookalike + Retargeting + Interest kombinatsiyasi.'}
+ `;
+
+ // Forecast metrics
+ document.getElementById('forecast-metrics').innerHTML = `
+ <div class="metric-card">
+ <div class="metric-value">${(estReach/1000).toFixed(0)}K</div>
+ <div class="metric-label">Reach (oylik)</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value">${(estClicks/1000*30).toFixed(0)}K</div>
+ <div class="metric-label">Kliklari (oylik)</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" style="color:var(--success)">${estLeads * 30}</div>
+ <div class="metric-label">Kutilayotgan leadlar</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value" style="color:var(--accent)">$${estCPL}</div>
+ <div class="metric-label">CPL (taxmin)</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value">${estROAS}x</div>
+ <div class="metric-label">Taxmin ROAS</div>
+ </div>
+ <div class="metric-card">
+ <div class="metric-value">${needCreatives}</div>
+ <div class="metric-label">Zarur creativlar</div>
+ </div>
+ `;
+
+ // Creative list
+ const creatives = getCreativeList(d.nisha, d.goal, needCreatives);
+ document.getElementById('creative-list').innerHTML = creatives.map((c, i) => `
+ <div class="creative-item">
+ <div class="creative-num">${i+1}</div>
+ <div>
+ <div class="creative-type">${c.type}</div>
+ <div class="creative-text">${c.desc}</div>
+ </div>
+ </div>
+ `).join('');
+
+ // Budget split
+ const splits = getBudgetSplit(d.goal, d.budget);
+ document.getElementById('budget-split').innerHTML = `
+ <div class="table-wrap">
+ <table>
+ <tr><th>Kampaniya turi</th><th>Ulushi</th><th>Summa</th><th>Maqsad</th></tr>
+ ${splits.map(s => `
+ <tr>
+ <td class="font-bold">${s.name}</td>
+ <td><span class="badge badge-info">${s.pct}%</span></td>
+ <td style="color:var(--success)">$${Math.round(d.budget * s.pct / 100)}</td>
+ <td class="text-xs">${s.goal}</td>
+ </tr>
+ `).join('')}
+ </table>
+ </div>
+ `;
+
+ // Risks & Feedback
+ document.getElementById('ai-risks').innerHTML = getRisks(d).map(r => `
+ <div style="display:flex;gap:10px;padding:12px;background:var(--bg3);border-radius:8px;margin-bottom:8px">
+ <span style="font-size:18px">${r.icon}</span>
+ <div>
+ <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:4px">${r.title}</div>
+ <div class="text-sm">${r.desc}</div>
+ </div>
+ </div>
+ `).join('');
+
+ // Audience for step 3
+ document.getElementById('audience-segments').innerHTML = getAudiences(d).map((a, i) => `
+ <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
+ <input type="checkbox" checked style="margin-top:3px">
+ <div>
+ <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:4px">${a.name}</div>
+ <div class="text-sm">${a.desc}</div>
+ <div style="margin-top:8px"><span class="badge badge-info">${a.size}</span> <span class="badge badge-warning">${a.cpl}</span></div>
+ </div>
+ </div>
+ `).join('');
+
+ // Voronka metrikasi
+ const funnelData = getFunnelMetrics(d);
+ document.getElementById('funnel-metrics').innerHTML = `
+ <div style="display:flex;align-items:stretch;gap:0;overflow-x:auto">
+ ${funnelData.voronka.map((v, i) => `
+ <div style="flex:1;min-width:120px;background:var(--bg3);padding:14px 10px;
+ border-left:${i === 0 ? '1px' : '0'} solid var(--border);
+ border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+ border-right:1px solid var(--border);
+ border-radius:${i===0?'8px 0 0 8px':i===funnelData.voronka.length-1?'0 8px 8px 0':'0'};text-align:center">
+ <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${v.bosqich}</div>
+ <div style="font-size:20px;font-weight:800;color:var(--white)">${v.qiymat}</div>
+ <div style="font-size:11px;color:var(--text2);margin-top:4px">${v.desc}</div>
+ </div>
+ ${i < funnelData.voronka.length-1 ? '<div style="display:flex;align-items:center;color:var(--text3);font-size:18px;flex-shrink:0">→</div>' : ''}
+ `).join('')}
+ </div>
+ `;
+
+ // Blok himoya checklisti
+ const checklist = getBlockProtectionChecklist();
+ document.getElementById('block-checklist').innerHTML = checklist.map(cat => `
+ <div style="margin-bottom:14px">
+ <div style="font-weight:700;font-size:13px;color:var(--primary-light);margin-bottom:8px">📁 ${cat.cat}</div>
+ ${cat.items.map(item => `
+ <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);
+ border-radius:7px;margin-bottom:5px;cursor:pointer;font-size:13px;color:var(--text)">
+ <input type="checkbox" style="width:16px;height:16px"> ${item}
+ </label>
+ `).join('')}
+ </div>
+ `).join('');
+
+ // Prefill campaign name
+ document.getElementById('camp-name').value = getCampaignName(d);
+ document.getElementById('daily-budget').value = Math.round(d.budget / 30);
+ document.getElementById('start-date').value = new Date().toISOString().split('T')[0];
+ document.getElementById('camp-objective').value = goalToObjective(d.goal);
+
+ document.getElementById('analysis-loading').style.display = 'none';
+ document.getElementById('analysis-result').style.display = 'block';
+ document.getElementById('tab-2').classList.add('completed');
+}
+
+// ===== STEP 3: LAUNCH =====
+function launchCampaign() {
+ state.campaignActive = true;
+ document.getElementById('tab-3').classList.add('completed');
+ showToast('✅ Kampaniya yoqildi! Kunlik hisobotlar boshlandi');
+ generateDailyReports();
+ generateOptimization();
+ setTimeout(() => goStep(4), 1500);
+}
+
+function generateDailyReports() {
+ const d = state.bizData;
+ const dailySpend = (d.budget / 30);
+ const days = [];
+ const today = new Date();
+
+ for (let i = 6; i >= 0; i--) {
+ const date = new Date(today);
+ date.setDate(date.getDate() - i);
+ const spend = (dailySpend * (0.8 + Math.random() * 0.4)).toFixed(2);
+ const reach = Math.round(spend * (1100 + Math.random() * 400));
+ const clicks = Math.round(spend * (30 + Math.random() * 20));
+ const leads = Math.round(clicks * ((d.conversion / 100) * (0.7 + Math.random() * 0.6)));
+ const cpc = (spend / clicks).toFixed(2);
+ const cpl = leads > 0 ? (spend / leads).toFixed(2) : '—';
+ const trend = Math.random() > 0.5 ? 'up' : (Math.random() > 0.5 ? 'down' : 'stable');
+
+ days.push({ date: date.toLocaleDateString('uz', {weekday:'short', day:'numeric', month:'short'}),
+ spend, reach, clicks, leads, cpc, cpl, trend });
+ }
+
+ // Update overview metrics
+ const last = days[days.length-1];
+ animateNumber('m-spend', parseFloat(last.spend), 1);
+ animateNumber('m-reach', last.reach, 0);
+ animateNumber('m-clicks', last.clicks, 0);
+ animateNumber('m-cpc', parseFloat(last.cpc), 2);
+ animateNumber('m-leads', last.leads, 0);
+ animateNumber('m-cpl', parseFloat(last.cpl) || 0, 2);
+
+ // Daily reports
+ document.getElementById('daily-reports').innerHTML = days.reverse().map(day => {
+ const status = parseFloat(day.cpl) < (d.cpa * 1.2) ?
+ '<span class="badge badge-success"><span class="dot"></span>Yaxshi</span>' :
+ parseFloat(day.cpl) < (d.cpa * 1.8) ?
+ '<span class="badge badge-warning"><span class="dot"></span>O\'rta</span>' :
+ '<span class="badge badge-danger"><span class="dot"></span>Yomon</span>';
+
+ return `
+ <div class="report-day">
+ <div class="report-date">${day.date}</div>
+ <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+ <div class="report-title">Kunlik natija</div>
+ ${status}
+ </div>
+ <div class="metrics-grid" style="grid-template-columns:repeat(6,1fr)">
+ <div class="metric-card"><div class="metric-value" style="font-size:16px">$${day.spend}</div><div class="metric-label">Xarajat</div></div>
+ <div class="metric-card"><div class="metric-value" style="font-size:16px">${(day.reach/1000).toFixed(1)}K</div><div class="metric-label">Reach</div></div>
+ <div class="metric-card"><div class="metric-value" style="font-size:16px">${day.clicks}</div><div class="metric-label">Klik</div></div>
+ <div class="metric-card"><div class="metric-value" style="font-size:16px">$${day.cpc}</div><div class="metric-label">CPC</div></div>
+ <div class="metric-card"><div class="metric-value" style="font-size:16px;color:var(--success)">${day.leads}</div><div class="metric-label">Lead</div></div>
+ <div class="metric-card"><div class="metric-value" style="font-size:16px;color:var(--accent)">$${day.cpl}</div><div class="metric-label">CPL</div></div>
+ </div>
+ <div style="margin-top:10px;font-size:13px;color:var(--text2);background:rgba(108,60,225,0.08);padding:10px;border-radius:8px">
+ 🤖 <strong style="color:var(--primary-light)">AI:</strong> ${getAIComment(day, d)}
+ </div>
+ </div>
+ `;
+ }).join('');
+}
+
+function generateOptimization() {
+ const d = state.bizData;
+
+ // Kunlik targetolog faoliyati
+ const kunlikFaoliyat = META_ALGORITHM_KNOWLEDGE.kunlik_faoliyat;
+
+ document.getElementById('opt-recommendations').innerHTML = `
+
+ <div style="margin-bottom:20px">
+ <div class="card-title" style="margin-bottom:12px;font-size:14px">🔬 Meta Algoritm — Gipoteza Usuli (Oltin Nisbat)</div>
+ <div style="display:flex;gap:0;overflow-x:auto">
+ ${META_ALGORITHM_KNOWLEDGE.gipoteza_usuli.map((g,i) => `
+ <div style="flex:1;min-width:110px;background:var(--bg3);border:1px solid var(--border);
+ padding:12px 10px;text-align:center;
+ border-radius:${i===0?'8px 0 0 8px':i===5?'0 8px 8px 0':'0'};
+ border-left:${i>0?'0':'1px solid var(--border)'}">
+ <div style="font-size:18px;margin-bottom:4px">${['🎯','🚀','👁️','🦢','📈','🔄'][i]}</div>
+ <div style="font-size:10px;font-weight:700;color:var(--primary-light);margin-bottom:3px">${g.bosqich}-bosqich</div>
+ <div style="font-size:11px;font-weight:700;color:var(--white);margin-bottom:4px">${g.nom}</div>
+ <div style="font-size:10px;color:var(--text3)">${g.desc}</div>
+ </div>
+ ${i<5?'<div style="display:flex;align-items:center;color:var(--text3);font-size:14px;flex-shrink:0">→</div>':''}
+ `).join('')}
+ </div>
+ </div>
+
+ <div style="margin-bottom:20px">
+ <div class="card-title" style="margin-bottom:12px;font-size:14px">⏰ Targetologning Kunlik Faoliyati</div>
+ ${kunlikFaoliyat.map(f => `
+ <div style="padding:10px 14px;background:var(--bg3);border-radius:8px;margin-bottom:6px;
+ display:flex;gap:10px;align-items:flex-start;font-size:13px;
+ border-left:3px solid ${f.includes('⚠️') ? 'var(--danger)' : 'var(--primary)'}">
+ <span>${f}</span>
+ </div>
+ `).join('')}
+ </div>
+
+ <div style="margin-bottom:20px">
+ <div class="card-title" style="margin-bottom:12px;font-size:14px">🌡️ Traffik Harorati — Qaysi auditoriyaga nima ko'rsatish</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+ ${Object.values(TRAFFIC_TEMPERATURE).map(t => `
+ <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px">
+ <div style="font-weight:700;margin-bottom:8px;font-size:14px">${t.nom}</div>
+ <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${t.desc}</div>
+ <div style="font-size:11px;color:var(--text3);margin-bottom:6px"><strong>Auditoriya:</strong><br>${t.auditoriya.join('<br>')}</div>
+ <div style="font-size:11px;color:var(--accent);margin-bottom:4px"><strong>CTA:</strong> ${t.cta}</div>
+ <div style="font-size:11px"><span class="badge badge-info">Konversiya: ${t.konversiya}</span></div>
+ </div>
+ `).join('')}
+ </div>
+ </div>
+
+ ${[
+ { icon: '🦢', title: 'Oqqushlarni kuzating', text: `Hammasidan yaxshi ishlayotgan 1 ta creative toping ("oqqush"). O'sha creative'ni ${d.budget < 300 ? 'budget 30% oshiring' : 'duplikat qilib scale qiling'}. Yomon ishlayotganlarni o'chiring.`, badge: 'Oltin Nisbat', type: 'success' },
+ { icon: '🔄', title: 'Creative Fatigue nazorati', text: `Frequency > 3.5 bo'lsa creative charchagan. CPL oshgan bo'lsa — auditoriya yoki creative yangilang. ${d.budget < 300 ? '2 ta' : '4-6 ta'} zaxira creative doim tayyor bo'lsin.`, badge: 'Muhim', type: 'danger' },
+ { icon: '📊', title: 'Voronka qayerda uzilgan?', text: `CTR yaxshi, CPL yuqori → Landing page muammo (konversiya past). CTR past → Creative/Audience muammo. Leads kelayapti, sotuv yo'q → Sotuv skripti va jarayon muammo.`, badge: 'Diagnostika', type: 'warning' },
+ { icon: '⚖️', title: 'CBO vs ABO tanlash', text: `$${d.budget} budjet bilan: ${d.budget > 400 ? 'CBO yoqing — Meta o\'zi taqsimlaydi' : 'ABO (manual) — har ad set\'ga alohida budjet'}. CBO ishlash uchun kamida 3 ta ad set bo\'lsin.`, badge: d.budget > 400 ? 'CBO tavsiya' : 'ABO tavsiya', type: 'info' }
+ ].map(r => `
+ <div style="display:flex;gap:12px;padding:16px;background:var(--bg3);border-radius:10px;margin-bottom:12px;
+ border-left:3px solid var(--${r.type==='success'?'success':r.type==='warning'?'warning':r.type==='danger'?'danger':'primary-light'})">
+ <span style="font-size:24px">${r.icon}</span>
+ <div style="flex:1">
+ <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+ <span class="font-bold">${r.title}</span>
+ <span class="badge badge-${r.type==='success'?'success':r.type==='warning'?'warning':r.type==='danger'?'danger':'info'}">${r.badge}</span>
+ </div>
+ <div class="text-sm">${r.text}</div>
+ </div>
+ </div>
+ `).join('')}
+ `;
+
+ // Creative scenarios
+ document.getElementById('creative-scenarios').innerHTML = getScenarios(d).map((s, i) => `
+ <div class="scenario-card">
+ <div class="scenario-num">SSENARIY ${i+1} • ${s.format}</div>
+ <div class="scenario-title">${s.title}</div>
+ <div class="scenario-text" style="line-height:1.7">${s.text}</div>
+ <div style="margin-top:10px;display:flex;gap:8px">
+ <span class="badge badge-info">⏱ ${s.duration}</span>
+ <span class="badge badge-success">📊 ${s.expectedCTR}</span>
+ </div>
+ </div>
+ `).join('');
+
+ // Copywriting 15-qadam — ichki bilim sifatida ishlatiladi, UI da ko'rsatilmaydi
+
+ // Stavkalar
+ document.getElementById('stavkalar-section').innerHTML = Object.values(STAVKALAR).map((s, i) => `
+ <div style="padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:10px;
+ border-left:3px solid ${i===0?'var(--success)':i===1?'var(--warning)':'var(--danger)'}">
+ <div style="font-weight:700;font-size:14px;color:var(--white);margin-bottom:6px">${s.nom}</div>
+ <div style="font-size:13px;color:var(--text2);margin-bottom:8px">${s.tavsif}</div>
+ <div style="display:flex;gap:20px;flex-wrap:wrap">
+ <div style="font-size:12px"><span style="color:var(--text3)">Qachon:</span> <strong>${s.qachon}</strong></div>
+ <div style="font-size:12px"><span style="color:var(--text3)">Xavf:</span> <span style="color:var(--warning)">${s.xavf}</span></div>
+ </div>
+ </div>
+ `).join('') + `
+ <div style="padding:12px;background:rgba(16,185,129,0.08);border-radius:8px;font-size:13px;color:var(--text2)">
+ 💡 <strong style="color:var(--success)">Tavsiya:</strong> Boshlang'ichlar uchun har doim <strong>Lowest Cost</strong>. Ma'lumot yig'ilgach (50+ event) Cost Cap sinab ko'ring.
+ </div>`;
+
+ // CTR, Value Ladder, NST — ichki bilim sifatida saqlanadi (AI tahlil va ssenariylar uchun)
+}
+
+// ===== TO'LIQ BILIM BAZASI (Target Pro + Copywriting + Maksimal Marketing + Oltin Nisbat + DotCom Secrets) =====
+
+// ── COPYWRITING 15-QADAM SOTUV XATI FORMULASI (Copywriting kursi: Ideal Sotuv Xati PDF) ──
+// Maqsad: Insonni qadam-baqadam qaror qabul qilish tarafiga olib o'tish
+const COPYWRITING_15_STEPS = [
+ {n:1,nom:"Sarlavha",desc:"Diqqatni tortish, 3 soniyada ushlab qolsin."},
+ {n:2,nom:"Shok Xabar",desc:"Intriga, kutilmagan fakt."},
+ {n:3,nom:"Muammoni takidlash",desc:"Muammoni tasvirlab isbotlang."},
+ {n:4,nom:"Negativ Oqibat",desc:"Ogriqni his qildiring."},
+ {n:5,nom:"Yechim Taklif",desc:"Yechim borligini korsating."},
+ {n:6,nom:"Foydalar",desc:"Xususiyat emas FOYDA."},
+ {n:7,nom:"Pozitiv Kelajak",desc:"Hayot ozgarishini his ettiring."},
+ {n:8,nom:"Nega Aynan Siz",desc:"USP, raqobatchilardan farqingiz."},
+ {n:9,nom:"Isbot",desc:"Mijoz gapi, raqamlar."},
+ {n:10,nom:"Qiymat",desc:"10x qiymat korsating."},
+ {n:11,nom:"Bonuslar",desc:"Qoshimcha bonuslar."},
+ {n:12,nom:"Kafolat",desc:"Risk bizda."},
+ {n:13,nom:"CTA",desc:"Bitta aniq harakat."},
+ {n:14,nom:"Shoshiltirish",desc:"Muddat cheklovi, 2x sotuv."},
+ {n:15,nom:"P.S.",desc:"Oxirini oquvchilar uchun qisqa takrorlash."}
+];
+
+// ── CTR MUAMMO-YECHIM MATRISI ──
+// Manba: SOTUVLAR SONINI OSHIRISH.pdf + CTR % pas.pdf
+const CTR_PROBLEM_MATRIX = [
+ {muammo:"CTR % past",belgisi:"CTR < 1%",yechimlar:["HOOKni kuchaytiring","Auditoriyani toraylating","Muammoni aniq korsating","CTA qoshing","Countdown timer"]},
+ {muammo:"Tashrif kam",belgisi:"Sayt sekin",yechimlar:["Rasm hajmini kamaytiring","Keraksiz kodni ochiring","Lazyload","Yaxshi hosting"]},
+ {muammo:"Lidlar yoq",belgisi:"Click keladi, forma toldirilmaydi",yechimlar:["Sarlavhani yaxshilang","AIDA bilan yozing","Kuchli CTA","Forma maydonlarini kamaytiring"]},
+ {muammo:"Sotuvlar yoq",belgisi:"Lid keladi, sotib olmaydi",yechimlar:["Call center skriptini yaxshilang","Follow-up qoshing","Re-target sozlang"]}
+];
+
+// ── RAD ETIB BO'LMAS TAKLIF ASOSLARI (Copywriting kursi: #2 Taklif Asoslari) ──
+const TAKLIF_FRAMEWORK = {
+ tamoyillar: [
+ 'Yaxshi Bozor — Taklif qilishdan avval bozorda talabni tekshiring (Yaxshi bozor yarim mol)',
+ 'Yaxshi bozorning 4 belgilari: Og\'riq bor | Pul bor | Erishish mumkin | O\'sish ustida',
+ 'Rad etib bo\'lmas taklif = Katta natija + Tez + Kam harakat + Kafolat',
+ 'Taklif = Mahsulot emas. Taklif = Transformation (qanday o\'zgarish bo\'ladi)'
+ ],
+ tekshiruv: [
+ { savol: 'Kimga sotasiz?', maqsad: 'Aniq segment — hammaga emas' },
+ { savol: 'Asosiy og\'riq nuqtasi nima?', maqsad: 'Bitta eng katta muammo' },
+ { savol: 'Hayot qanday o\'zgaradi?', maqsad: 'Transformation — before/after' },
+ { savol: 'Nima uchun raqobatchilar emas siz?', maqsad: 'USP aniq bo\'lsin' },
+ { savol: 'Xavf kamaytirishingiz?', maqsad: 'Kafolat yoki risk-reversal' }
+ ]
+};
+
+// ── MIJOZ PORTRETI (Maksimal Marketing: dars 1) ──
+const MIJOZ_PORTRET_TEMPLATE = {
+ demografik: ['Yosh: __', 'Jins: __', 'Joylashuv: __', 'Daromad darajasi: __', 'Kasb/Soha: __'],
+ psixografik: ['Asosiy orzulari: __', 'Asosiy qo\'rquvi: __', 'Kechasi uxlay olmasligiga sabab: __', 'Kelajakdagi o\'zi haqida orzusi: __'],
+ xatti_harakat: ['Qayerda vaqt o\'tkazadi: __', 'Kimga ishonadi: __', 'Qanday qaror qabul qiladi: __', 'Oxirgi marta nima sotib oldi: __'],
+ og_riq: ['1-darajali og\'riq: __', 'Yashirin og\'riq: __', 'Aytishdan uyaladigan muammo: __']
+};
+
+// ── TRAFFIK HARORATI (Maksimal Marketing: dars 5) ──
+const TRAFFIC_TEMPERATURE = {
+ sovuq: {
+ nom: '🧊 Sovuq Trafik (Cold)',
+ desc: 'Sizni bilmaydi. Siz kim ekanligingizni tushuntiring.',
+ auditoriya: ['Interest targeting', 'Broad auditoriya', 'Lookalike 3–5%'],
+ kontent: 'Brand awareness → Muammo → Yechim tanishtirish',
+ cta: 'Ko\'proq bilib oling / Tekshiring',
+ konversiya: '0.5–2%'
+ },
+ iliq: {
+ nom: '🌡️ Iliq Trafik (Warm)',
+ desc: 'Sizni biladi lekin sotib olmagan. Ishonch quring.',
+ auditoriya: ['Sahifani follow qilganlar', 'Video ko\'rganlar', 'Saytga kirganlar', 'Lookalike 1%'],
+ kontent: 'Social proof → Foydalar → Taklif',
+ cta: 'Hozir buyurtma bering / Sinab ko\'ring',
+ konversiya: '2–5%'
+ },
+ issiq: {
+ nom: '🔥 Issiq Trafik (Hot)',
+ desc: 'Sotib olmoqchi. Shunchaki itarish kerak.',
+ auditoriya: ['Savatga solgan', 'Forma boshlagan', 'Narx sahifasiga kirgan'],
+ kontent: 'Urgency → Kafolat → Etirozlar → CTA',
+ cta: 'Faqat bugun / Oxirgi imkon',
+ konversiya: '5–15%'
+ }
+};
+
+// ── META ALGORITM GIPOTEZA USULI (Target Pro 5-hafta + Oltin Nisbat) ──
+const META_ALGORITHM_KNOWLEDGE = {
+ tamoyillar: [
+ 'Meta algoritmi o\'rganish uchun 50 ta event kerak (learning phase)',
+ 'Ad Set boshiga minimum $5–10/kun — kamroq bo\'lsa o\'rganish sekin bo\'ladi',
+ 'Birinchi 3–7 kun o\'zgartirmang — algoritm o\'rgansin',
+ 'CBO yoqilsa Meta o\'zi eng yaxshi ad set\'ga ko\'proq pul beradi',
+ 'Broad + CBO = Meta algoritmiga maksimal erkinlik'
+ ],
+ gipoteza_usuli: [
+ { bosqich: 1, nom: 'Reklama gipotezasi', desc: 'Qaysi creative, qaysi auditoriya, qaysi matn sinashni reja qiling' },
+ { bosqich: 2, nom: 'Kampaniya boshlanishi', desc: 'Bitta kampaniya, 2–3 ad set, har birida 2 ta creative' },
+ { bosqich: 3, nom: 'Boshlang\'ich holatni kuzatish', desc: '3–7 kun data yig\'ing, o\'zgartirmang' },
+ { bosqich: 4, nom: 'Oqqushlarni kuzatish', desc: 'Eng yaxshi ishlayotgan creative/auditoriyani toping' },
+ { bosqich: 5, nom: 'Ta\'qib (Scale)', desc: 'Ishlayotganni kuchaytirib, ishlamayotganni o\'chirib boring' },
+ { bosqich: 6, nom: 'Re-target', desc: 'Issiq auditoriyaga alohida kampaniya qo\'shing' }
+ ],
+ kunlik_faoliyat: [
+ '08:00 — Hisobotlarni tekshirish (CPL, CTR, Frequency)',
+ '09:00 — Ishlayotgan/ishlamayotgan creative aniqlash',
+ '10:00 — Zarur o\'zgarishlar (budjet, audience, pause)',
+ '14:00 — Yangi creative/auditoriya gipotezasi',
+ '17:00 — Mijozga kunlik hisobot yuborish',
+ '⚠️ Kuniga 1 martadan ko\'p o\'zgartirma — algoritm buziladi'
+ ]
+};
+
+// ── SOTUV VORONKASI (Maksimal Marketing: dars 3) ──
+const SOTUV_VORONKASI = {
+ oddiy: [
+ { bosqich: 'Reklama', konversiya: '100%', harakat: 'Impression → Click' },
+ { bosqich: 'Landing Page', konversiya: '2–10%', harakat: 'Click → Lead/So\'rov' },
+ { bosqich: 'Muloqot', konversiya: '20–50%', harakat: 'Lead → Suhbat' },
+ { bosqich: 'Taklif', konversiya: '10–30%', harakat: 'Suhbat → Taklif' },
+ { bosqich: 'Sotuv', konversiya: '5–20%', harakat: 'Taklif → To\'lov' }
+ ],
+ webinar: [
+ { bosqich: 'Reklama → Ro\'yxatdan o\'tish', konversiya: '20–40%', harakat: 'Webinar registratsiya' },
+ { bosqich: 'Ro\'yxatdan o\'tish → Kelish', konversiya: '30–50%', harakat: 'Live/replay ko\'rish' },
+ { bosqich: 'Webinar → Taklif', konversiya: '5–15%', harakat: 'Pitch qilish' },
+ { bosqich: 'Taklif → Sotuv', konversiya: '2–10%', harakat: 'To\'lov' }
+ ]
+};
+
+// �
+const STAVKALAR = {
+ "Lowest Cost": {nom:"Lowest Cost",tavsif:"Meta eng arzon konversiya topadi.",qachon:"Har doim default",xavf:"Budget tugagach toxtatadi"},
+ "Cost Cap": {nom:"Cost Cap",tavsif:"CPL cheklaysiz.",qachon:"CPL aniq bulganda",xavf:"Malumot yetarli bolmasa past"},
+ "Bid Cap": {nom:"Bid Cap",tavsif:"Har auksionda max stavka.",qachon:"Tajribali targetolog",xavf:"Notogri ornatilsa ishlamaydi"}
+};
+const CAMPAIGN_TYPES = {
+ "Sotuvni oshirish (konversiya)":{objective:"CONVERSIONS",event:"Purchase",pixel:true,minBudget:15,cboTavsiya:true,desc:"Purchase eventi."},
+ "Lead (so'rovlar) yig'ish":{objective:"LEAD_GENERATION",event:"Lead",pixel:false,minBudget:8,cboTavsiya:false,desc:"Forma orqali lead."},
+ "Brend taniqliligini oshirish":{objective:"BRAND_AWARENESS",event:null,pixel:false,minBudget:5,cboTavsiya:false,desc:"CPM asosida."},
+ "Onlayn do'kon trafigi":{objective:"TRAFFIC",event:"ViewContent",pixel:true,minBudget:5,cboTavsiya:false,desc:"CPC asosida."},
+ "Messenger / Telegram orqali savdo":{objective:"MESSAGES",event:null,pixel:false,minBudget:8,cboTavsiya:false,desc:"Messenger."}
+};
+function getAudienceStrategy(d){var t=d.budget<200?"low":d.budget<600?"mid":"high";var b=[{name:"🔥 Retargeting",desc:"Sahifaga kirgan lekin sotib olmagan.",type:"Pixel",size:"1K-20K",cpl:"Eng past",budjet_ulush:t==="low"?"40%":"30%"},{name:"👥 Lookalike 1%",desc:"Mavjud mijozlarga oxshash 1%.",type:"Lookalike",size:"50K-300K",cpl:"Past",budjet_ulush:t==="low"?"30%":"35%"},{name:"🎯 Interest",desc:"Meta interest: "+d.nisha,type:"Interest",size:"100K-500K",cpl:"Orta",budjet_ulush:t==="low"?"20%":"25%"},{name:"🌐 Broad",desc:"Meta ozi auditoriya topadi.",type:"Broad",size:"2M-10M",cpl:"Yuqori",budjet_ulush:t==="high"?"10%":"0%"}];return t==="low"?b.slice(0,3):b;}
+function getBudgetStrategy(budget,goal){if(goal.includes("konversiya")||goal.includes("Purchase"))return [{name:"🔥 Retargeting",pct:30,goal:"Issiq auditoriya",stavka:"Lowest Cost"},{name:"👥 Lookalike",pct:40,goal:"Oxshash auditoriya",stavka:"Lowest Cost"},{name:"🎯 Interest",pct:20,goal:"Yangi auditoriya",stavka:"Lowest Cost"},{name:"🧪 Test",pct:10,goal:"Creative aniqlash",stavka:"Lowest Cost"}];if(goal.includes("Lead"))return [{name:"🎯 Lead Form",pct:50,goal:"Asosiy lead",stavka:"Lowest Cost"},{name:"👥 Lookalike",pct:35,goal:"Keng auditoriya",stavka:"Lowest Cost"},{name:"🧪 Test",pct:15,goal:"Creative test",stavka:"Lowest Cost"}];return [{name:"🌐 Asosiy",pct:60,goal:"Asosiy maqsad",stavka:"Lowest Cost"},{name:"👥 Lookalike",pct:25,goal:"Oxshash",stavka:"Lowest Cost"},{name:"🧪 Test",pct:15,goal:"Test",stavka:"Lowest Cost"}];}
+function getBudgetSplit(goal,budget){return getBudgetStrategy(budget,goal);}
+function getRisks(d){var r=[],ct=CAMPAIGN_TYPES[d.goal]||{};if(ct.pixel)r.push({icon:"📊",title:"Pixel MAJBURIY",desc:"Events Manager'dan Purchase/Lead eventi sozlang."});if(d.budget<200)r.push({icon:"⚠️",title:"Budjet oz",desc:"Ad set boshiga $10-15/kun kerak."});if(ct.cboTavsiya&&d.budget>300)r.push({icon:"💡",title:"CBO yoqing",desc:"Meta eng yaxshi ad setga ko'proq budjet beradi."});if(d.conversion<2)r.push({icon:"🔴",title:"Landing past",desc:d.conversion+"% — Maqsad 3-5%."});r.push({icon:"🔄",title:"Frequency nazorati",desc:"Frequency > 4 bolsa CPL oshadi."});r.push({icon:"🌐",title:"Domen tekshiring",desc:"Business Manager'da tasdiqlang."});return r;}
+function getAudiences(d){return getAudienceStrategy(d).map(function(a){return{name:a.name,desc:a.desc+" | "+a.budjet_ulush,size:a.size,cpl:a.cpl};});}
+function getAIComment(day,d){var cpl=parseFloat(day.cpl),freq=(Math.random()*2+1).toFixed(1);if(cpl<d.cpa*0.8)return "🟢 CPL "+Math.round((1-cpl/d.cpa)*100)+"% past — Scale qiling.";if(cpl<d.cpa)return "✅ CPL maqsadda. Freq: "+freq;if(cpl<d.cpa*1.5)return "🟡 CPL yuqori. Creative yangilang.";return "🔴 CPL yuqori. Freq: "+freq+". Yangi auditoriya.";}
+function getScenarios(d){var m=MASLOW[d.nisha]||{trigger:"Muammo va Yechim"},t=m.trigger;return [{format:"🧊 SOVUQ VIDEO",title:t+" YECHIM",text:"<b>HOOK:</b> "+t+"<br><b>MUAMMO:</b> Tasvirlang<br><b>YECHIM:</b> Ko'rsating<br><b>CTA</b>",duration:"15-30 sek",expectedCTR:"2-5%"},{format:"🌡️ ILIQ UGC",title:"Mijoz tavsiyasi",text:"Men ham shu muammoda edim...<br>Mahsulotni ko'rdim...<br>Natija boldi<br>Sinab ko'ring",duration:"30-60 sek",expectedCTR:"4-9%"},{format:"🔥 ISSIQ STORIES",title:"Urgency + Kafolat",text:"<b>1:</b> Ko'rib chiqmadingizmi?<br><b>2:</b> Narx<br><b>3:</b> X ta qoldi<br><b>4:</b> Kafolat",duration:"6-10 sek",expectedCTR:"6-15%"},{format:"📋 COPYWRITING",title:d.nisha+" matni",text:"<b>1.</b> Sarlavha<br><b>2.</b> Muammo<br><b>3.</b> Yechim<br><b>4.</b> Dalil<br><b>5.</b> CTA",duration:"Matn",expectedCTR:"Eng yuqori"},{format:"🎠 CAROUSEL",title:"Muammo Yechim Taklif",text:"<b>1:</b> "+t+"<br><b>2-3:</b> Foydalar<br><b>4:</b> Dalil<br><b>5:</b> CTA",duration:"Rasm",expectedCTR:"2-6%"}];}
+function openFeedback(){document.getElementById("feedback-modal").classList.add("open");}
+function closeFeedback(){document.getElementById("feedback-modal").classList.remove("open");}
+function toggleTag(el){el.classList.toggle("selected");}
+function submitFeedback(){closeFeedback();showToast("Feedback yuborildi!");document.getElementById("feedback-text").value="";document.querySelectorAll(".tag.selected").forEach(function(t){t.classList.remove("selected");});}
+function animateNumber(id,target,decimals){var el=document.getElementById(id);if(!el||!target)return;var start=0,step=target/30;var timer=setInterval(function(){start=Math.min(start+step,target);el.textContent=start.toFixed(decimals);if(start>=target)clearInterval(timer);},50);}
+function showToast(msg,type){type=type||"success";var t=document.getElementById("toast");if(!t)return;t.textContent=msg;t.style.background=type==="warning"?"var(--warning)":"var(--success)";t.classList.add("show");setTimeout(function(){t.classList.remove("show");},3000);}
+function goal2text(g){return g.includes("konversiya")?"konversiya":g.includes("Lead")?"lead":"brend";}
+function raqobat(n){return "<span style='color:var(--warning)'>ORTA</span>";}
+function goalToObjective(g){var ct=CAMPAIGN_TYPES[g];return ct?ct.objective:"CONVERSIONS";}
+function getCreativeList(nisha,goal,count){var m=MASLOW[nisha]||{trigger:"Hook"},b=[{type:"VIDEO",desc:"Hook: "+m.trigger},{type:"RASM",desc:"Narx+CTA"},{type:"CAROUSEL",desc:"1:Muammo 5:CTA"},{type:"STORIES",desc:"Vertikal"},{type:"UGC",desc:"Haqiqiy mijoz"},{type:"Before/After",desc:nisha},{type:"Testimonial",desc:"Mijoz fikri"},{type:"Tutorial",desc:"Korsating"},{type:"Offer",desc:"Chegirma"},{type:"FAQ",desc:"3 savol"}];return b.slice(0,count);}
+function getCampaignName(d){var dt=new Date().toISOString().slice(0,7),g=d.geo.includes("Toshkent shahri")?"TSH":"UZ",goal=d.goal.includes("konversiya")?"CONV":d.goal.includes("Lead")?"LEAD":"MSG";return (d.bizName||"BRAND")+"_"+g+"_"+goal+"_"+dt;}
+function getCopywritingFramework(d){var m=MASLOW[d.nisha]||{daraja:3,motiv:"Qulaylik",trigger:"Natija"};return{formula:"AIDA",maslow_daraja:m.daraja,asosiy_motiv:m.motiv,hook:m.trigger,matn_tuzilma:["HOOK: "+m.trigger,"MUAMMO","YECHIM","DALIL","CTA"]};}
+function getFunnelMetrics(d){var db=d.budget/30,cpm=d.geo.includes("Toshkent")?2.5:1.8,ctr=1.5,lpr=d.conversion;var imp=Math.round((db/cpm)*1000),cl=Math.round(imp*ctr/100),lds=Math.round(cl*lpr/100),cpc=cl>0?(db/cl).toFixed(2):"0",cpl=lds>0?(db/lds).toFixed(2):"0";return{impressions:imp,clicks:cl,leads:lds,cpc:cpc,cpl_calc:cpl,cpm:cpm,voronka:[{bosqich:"Impressions",qiymat:imp.toLocaleString(),desc:"CPM: $"+cpm},{bosqich:"Clicks",qiymat:cl.toLocaleString(),desc:"CTR: "+ctr+"%"},{bosqich:"Landing",qiymat:cl.toLocaleString(),desc:"Click=Visit"},{bosqich:"Leads",qiymat:lds.toLocaleString(),desc:"LPR: "+lpr+"%"+(lpr<2?" ⚠️":" ✅")},{bosqich:"CPL",qiymat:"$"+cpl,desc:"Maqsad: $"+d.cpa+" "+(parseFloat(cpl)<=d.cpa?"✅":"⚠️")}]};}
+document.addEventListener("DOMContentLoaded",function(){var sd=document.getElementById("start-date");if(sd)sd.value=new Date().toISOString().split("T")[0];});
+
+</script>
+</body>
