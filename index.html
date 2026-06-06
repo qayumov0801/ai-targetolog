@@ -26,10 +26,29 @@
  </button>
 
  <div class="auth-phone-form" id="phone-form">
- <input class="auth-input" type="tel" id="phone-input" placeholder="+998 90 123 45 67">
- <button class="auth-btn auth-btn-phone" onclick="authPhone()" style="margin-top:0">
- ✅ Davom etish
- </button>
+  <input class="auth-input" type="text" id="user-name-input" placeholder="Ismingiz (Masalan: Husniddin)">
+  <input class="auth-input" type="tel" id="phone-input" placeholder="+998 90 123 45 67">
+  <button class="auth-btn auth-btn-phone" onclick="authPhone()" style="margin-top:0">
+   📤 OTP yuborish
+  </button>
+  <!-- OTP tasdiqlash qismi -->
+  <div id="otp-step" class="hidden" style="margin-top:10px">
+   <input class="auth-input" type="number" id="otp-input" placeholder="6 xonali kod" maxlength="6" style="letter-spacing:6px;font-size:20px;text-align:center">
+   <button class="auth-btn auth-btn-phone" onclick="verifyOTP()" style="margin-top:0">
+    ✅ Kodni tasdiqlash
+   </button>
+   <div style="font-size:12px;color:var(--text3);margin-top:6px;text-align:center">Kod 5 daqiqa amal qiladi</div>
+  </div>
+ </div>
+
+ <!-- Email bilan kirish (fallback) -->
+ <div class="auth-phone-form hidden" id="email-form">
+  <input class="auth-input" type="text" id="email-name-input" placeholder="Ismingiz">
+  <input class="auth-input" type="email" id="email-input" placeholder="Email manzilingiz">
+  <input class="auth-input" type="password" id="pass-input" placeholder="Parol (kamida 6 belgi)">
+  <button class="auth-btn auth-btn-phone" onclick="authEmail()" style="margin-top:0">
+   ✅ Ro'yxatdan o'tish / Kirish
+  </button>
  </div>
 
  <div class="auth-skip" onclick="skipAuth()">Hozircha o'tkazib yuborish →</div>
@@ -282,7 +301,7 @@
  <option>Sotuvni oshirish (konversiya)</option>
  <option>Lead (so'rovlar) yig'ish</option>
  <option>Brend taniqliligini oshirish</option>
- <option>Onlayn do'kon trafigi</option>
+ <option>Onlayn dokon trafigi</option>
  <option>Messenger / Telegram orqali savdo</option>
  </select>
  </div>
@@ -362,6 +381,11 @@
  <div class="ai-block">
  <div class="ai-block-title">🤖 AI Tahlil xulosasi</div>
  <div id="ai-summary" class="text-sm" style="line-height:1.7"></div>
+ </div>
+
+ <div class="ai-block" id="ai-strategy-block" style="display:none;border:1px solid var(--accent,#6c3ce1)">
+ <div class="ai-block-title">🧠 AI Strategik Tahlil <span id="ai-strategy-src" style="font-size:10px;opacity:.6"></span></div>
+ <div id="ai-strategy" class="text-sm" style="line-height:1.7;white-space:pre-wrap"></div>
  </div>
 
  <div class="card">
@@ -508,23 +532,19 @@
  </div>
 
  <div class="page" id="page-5">
+ <div class="ai-block" id="opt-ai-block" style="display:none;border:1px solid var(--accent,#6c3ce1);margin-bottom:16px">
+ <div class="ai-block-title">🧠 AI Optimizatsiya (real vaqt tahlili)</div>
+ <div id="opt-ai" class="text-sm" style="line-height:1.7;white-space:pre-wrap"></div>
+ </div>
  <div class="card">
  <div class="card-title">🔧 AI Optimizatsiya Tavsiyalari</div>
  <div class="card-sub">Meta algoritm, kunlik faoliyat, traffik harorati va scale strategiyasi</div>
  <div id="opt-recommendations"></div>
  </div>
 
- <div class="card">
- <div class="card-title">🎬 Creative Ssenariylar (Traffik haroratiga qarab)</div>
- <div class="card-sub">Sovuq → Iliq → Issiq trafik uchun alohida ssenariylar + 15-qadam copywriting</div>
- <div id="creative-scenarios"></div>
- </div>
-
- <div class="card">
- <div class="card-title">⚖️ Stavkalar Strategiyasi</div>
- <div class="card-sub">Qaysi holatda qaysi bidding strategiyasini ishlating</div>
- <div id="stavkalar-section"></div>
- </div>
+ <!-- creative-scenarios va stavkalar-section — ichki bilim sifatida saqlanadi, UI da ko'rsatilmaydi -->
+ <div id="creative-scenarios" style="display:none"></div>
+ <div id="stavkalar-section" style="display:none"></div>
  </div>
 
 </div>
@@ -571,60 +591,219 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== AUTH & ONBOARDING =====
-function showMainApp() {
- document.getElementById('main-header').style.display = 'flex';
- document.getElementById('main-steps').style.display = 'flex';
- document.getElementById('main-content').style.display = 'block';
+// ===== CONFIG =====
+var API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3001/api'
+  : 'https://ai-targetolog-backend.up.railway.app/api';
+
+var TOKEN_KEY = 'ait_token';
+var USER_KEY = 'ait_user';
+
+// ===== GLOBAL STATE (yuqorida — yuklanishdagi funksiyalar undan oldin ishlamasligi uchun) =====
+var state = {
+ step: 1,
+ completed: [],
+ bizData: {},
+ campaignActive: false,
+ currentUser: null
+};
+
+// ===== API HELPER =====
+async function apiCall(method, path, body, auth) {
+  var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+  if (auth !== false) {
+    var tk = localStorage.getItem(TOKEN_KEY);
+    if (tk) opts.headers['Authorization'] = 'Bearer ' + tk;
+  }
+  if (body) opts.body = JSON.stringify(body);
+  var res = await fetch(API_URL + path, opts);
+  var data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Xato');
+  return data;
 }
 
+function saveSession(token, user) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  state.currentUser = user;
+}
+
+function loadSession() {
+  var tk = localStorage.getItem(TOKEN_KEY);
+  var usr = localStorage.getItem(USER_KEY);
+  if (tk && usr) { state.currentUser = JSON.parse(usr); return true; }
+  return false;
+}
+
+// ===== AUTH & ONBOARDING =====
+function showMainApp() {
+  document.getElementById('main-header').style.display = 'flex';
+  document.getElementById('main-steps').style.display = 'flex';
+  document.getElementById('main-content').style.display = 'block';
+  // User ismini headerda ko'rsat
+  var u = state.currentUser;
+  if (u) {
+    var nameEl = document.getElementById('header-user-name');
+    if (nameEl) nameEl.textContent = u.name || u.email || u.phone;
+  }
+}
+
+// Google OAuth
 function authGoogle() {
- // Demo: real proyektda Google OAuth bilan
- document.getElementById('auth-screen').classList.add('hidden');
- document.getElementById('onboard-screen').classList.remove('hidden');
+  // Google OAuth SDK orqali (GSI — Google Sign In)
+  if (typeof google !== 'undefined' && google.accounts) {
+    google.accounts.id.initialize({
+      client_id: '{{GOOGLE_CLIENT_ID}}',
+      callback: async function(response) {
+        try {
+          // JWT decode (base64)
+          var payload = JSON.parse(atob(response.credential.split('.')[1]));
+          var data = await apiCall('POST', '/auth/google', {
+            googleId: payload.sub, name: payload.name,
+            email: payload.email, avatar: payload.picture
+          }, false);
+          saveSession(data.token, data.user);
+          document.getElementById('auth-screen').classList.add('hidden');
+          document.getElementById('onboard-screen').classList.remove('hidden');
+        } catch(e) { showToast(e.message, 'warning'); }
+      }
+    });
+    google.accounts.id.prompt();
+  } else {
+    // Fallback: ism + email bilan tez kirish
+    document.getElementById('email-form').classList.remove('hidden');
+    document.getElementById('phone-form').classList.add('hidden');
+  }
 }
 
 function showPhoneForm() {
- document.getElementById('phone-form').classList.toggle('show');
+  var pf = document.getElementById('phone-form');
+  var ef = document.getElementById('email-form');
+  pf.classList.toggle('show');
+  if (ef) ef.classList.add('hidden');
+  // OTP bosqichi
+  document.getElementById('otp-step') && document.getElementById('otp-step').classList.add('hidden');
 }
 
-function authPhone() {
- const phone = document.getElementById('phone-input').value.trim();
- if (!phone || phone.length < 9) {
- showToast('⚠️ To\'g\'ri telefon raqam kiriting', 'warning'); return;
- }
- document.getElementById('auth-screen').classList.add('hidden');
- document.getElementById('onboard-screen').classList.remove('hidden');
+// Telefon: OTP yuborish
+async function authPhone() {
+  var name = document.getElementById('user-name-input') ? document.getElementById('user-name-input').value.trim() : '';
+  var phone = document.getElementById('phone-input').value.trim();
+  if (!phone || phone.replace(/\D/g,'').length < 9) {
+    showToast("To'g'ri telefon raqam kiriting", 'warning'); return;
+  }
+  var btn = document.querySelector('.auth-btn-phone');
+  if (btn) { btn.disabled = true; btn.textContent = '📤 Yuborilmoqda...'; }
+  try {
+    var data = await apiCall('POST', '/auth/send-otp', { phone: phone }, false);
+    state.pendingPhone = phone;
+    state.pendingName = name;
+    showToast('✅ OTP yuborildi!');
+    // OTP kiritish qismini ko'rsat
+    var otpStep = document.getElementById('otp-step');
+    if (otpStep) otpStep.classList.remove('hidden');
+    // Dev modeda konsolda ko'rinadi
+    if (data.debug_code) console.log('OTP:', data.debug_code);
+  } catch(e) {
+    showToast(e.message, 'warning');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📱 Telefon raqam bilan'; }
+  }
+}
+
+// OTP tasdiqlash
+async function verifyOTP() {
+  var code = document.getElementById('otp-input') ? document.getElementById('otp-input').value.trim() : '';
+  if (!code || code.length !== 6) { showToast("6 xonali kod kiriting", 'warning'); return; }
+  try {
+    var data = await apiCall('POST', '/auth/verify-otp', {
+      phone: state.pendingPhone, code: code, name: state.pendingName || 'Foydalanuvchi'
+    }, false);
+    saveSession(data.token, data.user);
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('onboard-screen').classList.remove('hidden');
+    showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
+  } catch(e) { showToast(e.message, 'warning'); }
+}
+
+// Email bilan ro'yxatdan o'tish / kirish
+async function authEmail() {
+  var name = document.getElementById('email-name-input').value.trim();
+  var email = document.getElementById('email-input').value.trim();
+  var pass = document.getElementById('pass-input').value;
+  if (!email || !pass) { showToast("Email va parol kerak", 'warning'); return; }
+  try {
+    var data;
+    try {
+      // Avval login urinib ko'ramiz
+      data = await apiCall('POST', '/auth/login', { email, password: pass }, false);
+    } catch(e) {
+      // Login ishlamasa — register
+      if (!name) { showToast("Ismingizni kiriting", 'warning'); return; }
+      data = await apiCall('POST', '/auth/register', { name, email, password: pass }, false);
+    }
+    saveSession(data.token, data.user);
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('onboard-screen').classList.remove('hidden');
+    showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
+  } catch(e) { showToast(e.message, 'warning'); }
 }
 
 function skipAuth() {
- document.getElementById('auth-screen').classList.add('hidden');
- document.getElementById('onboard-screen').classList.remove('hidden');
+  if (loadSession()) {
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('onboard-screen').classList.remove('hidden');
+  } else {
+    state.currentUser = { name: 'Mehmon', role: 'guest' };
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('onboard-screen').classList.remove('hidden');
+  }
 }
+
+// ===== AVTOMATIK SESSION TEKSHIRISH =====
+(function checkExistingSession() {
+  if (loadSession()) {
+    // Token mavjud — auth ekranini ko'rsatmasdan to'g'ri onboarding ga o't
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('onboard-screen').classList.remove('hidden');
+    // Token haqiqiyligini background da tekshiramiz
+    apiCall('GET', '/auth/me').then(function(data) {
+      saveSession(localStorage.getItem(TOKEN_KEY), data.user);
+    }).catch(function() {
+      // Token yaroqsiz — login ga qaytaramiz
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      document.getElementById('onboard-screen').classList.add('hidden');
+      document.getElementById('auth-screen').classList.remove('hidden');
+    });
+  }
+})();
 
 function onboardYes() {
  document.getElementById('onboard-screen').classList.add('hidden');
  document.getElementById('access-screen').classList.remove('hidden');
 }
 
-function saveAccessAndContinue() {
- var accId = document.getElementById('acc-id').value.trim();
- if (!accId) {
- document.getElementById('acc-id').style.borderColor = 'var(--danger)';
- return;
- }
- if (!accId.startsWith('act_')) accId = 'act_' + accId;
- var bmId = document.getElementById('bm-id').value.trim();
- var pageName = document.getElementById('page-name').value.trim();
- state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName };
- if (pageName && document.getElementById('biz-name')) {
- document.getElementById('biz-name').value = pageName;
- }
- // Tahlil ekraniga o't va akkaunt ID ni ko'rsat
- document.getElementById('access-screen').classList.add('hidden');
- document.getElementById('analysis-prev-screen').classList.remove('hidden');
- var showEl = document.getElementById('show-acc-id');
- if (showEl) showEl.textContent = accId;
+async function saveAccessAndContinue() {
+  var accId = document.getElementById('acc-id').value.trim();
+  if (!accId) { document.getElementById('acc-id').style.borderColor = 'var(--danger)'; return; }
+  if (!accId.startsWith('act_')) accId = 'act_' + accId;
+  var bmId = document.getElementById('bm-id').value.trim();
+  var pageName = document.getElementById('page-name').value.trim();
+  state.fbAccess = { accId, bmId, pageName };
+
+  // Backend ga saqlash (token bo'lsa)
+  var tk = localStorage.getItem(TOKEN_KEY);
+  if (tk) {
+    try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId, bm_id: bmId, page_name: pageName }); }
+    catch(e) { console.warn('FB ma\'lumotlari saqlanmadi:', e.message); }
+  }
+
+  if (pageName && document.getElementById('biz-name')) document.getElementById('biz-name').value = pageName;
+  document.getElementById('access-screen').classList.add('hidden');
+  document.getElementById('analysis-prev-screen').classList.remove('hidden');
+  var showEl = document.getElementById('show-acc-id');
+  if (showEl) showEl.textContent = accId;
 }
 
 function skipPrevAnalysis() {
@@ -856,12 +1035,7 @@ function backToOnboard() {
 }
 
 // ===== STATE =====
-let state = {
- step: 1,
- completed: [],
- bizData: {},
- campaignActive: false
-};
+// state yuqoriga (skript boshiga) ko'chirildi — TDZ xatosining oldini olish uchun
 
 // ===== NAVIGATION =====
 function goStep(n) {
@@ -889,7 +1063,9 @@ function runAnalysis() {
  showToast('⚠️ Iltimos, barcha majburiy maydonlarni to\'ldiring', 'warning'); return;
  }
 
- state.bizData = { nisha, budget, geo, goal, offer, cpa, conversion, bizName };
+ const pain = (document.getElementById('mijoz-pain') || {}).value || (document.getElementById('pain') || {}).value || '';
+ const dream = (document.getElementById('mijoz-dream') || {}).value || '';
+ state.bizData = { nisha, budget, geo, goal, offer, cpa, conversion, bizName, pain, dream };
  goStep(2);
 
  document.getElementById('analysis-loading').style.display = 'flex';
@@ -898,7 +1074,53 @@ function runAnalysis() {
  document.getElementById('tab-1').classList.remove('active');
  document.getElementById('tab-1').classList.add('completed');
 
- setTimeout(() => generateAnalysis(), 2500);
+ setTimeout(() => { generateAnalysis(); fetchAIStrategy(state.bizData); }, 2500);
+}
+
+// ===== REAL AI (BACKEND LLM) =====
+// **bold** va qator uzilishlarini sodda HTML ga aylantiradi
+function mdLite(t) {
+  return (t || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--white)">$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+async function fetchAIStrategy(d) {
+  const block = document.getElementById('ai-strategy-block');
+  const out = document.getElementById('ai-strategy');
+  const srcEl = document.getElementById('ai-strategy-src');
+  if (!block || !out) return;
+  block.style.display = 'block';
+  out.innerHTML = '<span style="opacity:.6">⏳ AI strategik tahlil tayyorlanmoqda...</span>';
+  try {
+    const data = await apiCall('POST', '/ai/analyze', {
+      bizName: d.bizName, nisha: d.nisha, offer: d.offer, budget: d.budget,
+      geo: d.geo, goal: d.goal, conversion: d.conversion, pain: d.pain, dream: d.dream
+    }, false);
+    out.innerHTML = mdLite(data.text);
+    if (srcEl) srcEl.textContent = data.source === 'template' ? '(shablon)' : '(' + data.source + ')';
+    state.lastAI = data;
+  } catch (e) {
+    // Backend ulanmasa — blokni yashiramiz (frontend shablon tahlili baribir ko'rinadi)
+    block.style.display = 'none';
+  }
+}
+
+async function fetchAIOptimization() {
+  const d = state.bizData || {};
+  const target = document.getElementById('opt-ai-block');
+  const out = document.getElementById('opt-ai');
+  if (!target || !out) return;
+  target.style.display = 'block';
+  out.innerHTML = '<span style="opacity:.6">⏳ AI optimizatsiya tavsiyasi tayyorlanmoqda...</span>';
+  try {
+    const reports = (state.reportRows || []).slice(0, 7);
+    const data = await apiCall('POST', '/ai/optimize', { biz: d, reports }, false);
+    out.innerHTML = mdLite(data.text);
+  } catch (e) {
+    target.style.display = 'none';
+  }
 }
 
 function generateAnalysis() {
@@ -1103,8 +1325,16 @@ function generateDailyReports() {
  const trend = Math.random() > 0.5 ? 'up' : (Math.random() > 0.5 ? 'down' : 'stable');
 
  days.push({ date: date.toLocaleDateString('uz', {weekday:'short', day:'numeric', month:'short'}),
+ iso: date.toISOString().slice(0,10),
  spend, reach, clicks, leads, cpc, cpl, trend });
  }
+
+ // AI optimizatsiya uchun xom ma'lumotni saqlaymiz (eng yangi birinchi)
+ state.reportRows = days.slice().reverse().map(x => ({
+ report_date: x.iso, spend: parseFloat(x.spend), reach: x.reach, clicks: x.clicks,
+ ctr: x.reach > 0 ? +((x.clicks / x.reach) * 100).toFixed(2) : 0,
+ cpc: parseFloat(x.cpc), leads: x.leads, cpl: x.cpl === '—' ? 0 : parseFloat(x.cpl)
+ }));
 
  // Update overview metrics
  const last = days[days.length-1];
@@ -1148,6 +1378,9 @@ function generateDailyReports() {
 
 function generateOptimization() {
  const d = state.bizData;
+
+ // Real AI optimizatsiya tavsiyasini backenddan olamiz (fonda)
+ fetchAIOptimization();
 
  // Kunlik targetolog faoliyati
  const kunlikFaoliyat = META_ALGORITHM_KNOWLEDGE.kunlik_faoliyat;
@@ -1382,16 +1615,16 @@ const SOTUV_VORONKASI = {
 
 // �
 const STAVKALAR = {
- "Lowest Cost": {nom:"Lowest Cost",tavsif:"Meta eng arzon konversiya topadi.",qachon:"Har doim default",xavf:"Budget tugagach toxtatadi"},
- "Cost Cap": {nom:"Cost Cap",tavsif:"CPL cheklaysiz.",qachon:"CPL aniq bulganda",xavf:"Malumot yetarli bolmasa past"},
- "Bid Cap": {nom:"Bid Cap",tavsif:"Har auksionda max stavka.",qachon:"Tajribali targetolog",xavf:"Notogri ornatilsa ishlamaydi"}
+  "Lowest Cost": {nom:"Lowest Cost",tavsif:"Meta eng arzon konversiya topadi.",qachon:"Har doim default",xavf:"Budget tugagach toxtatadi"},
+  "Cost Cap": {nom:"Cost Cap",tavsif:"CPL cheklaysiz.",qachon:"CPL aniq bulganda",xavf:"Malumot yetarli bolmasa past"},
+  "Bid Cap": {nom:"Bid Cap",tavsif:"Har auksionda max stavka.",qachon:"Tajribali targetolog",xavf:"Notogri ornatilsa ishlamaydi"}
 };
 const CAMPAIGN_TYPES = {
- "Sotuvni oshirish (konversiya)":{objective:"CONVERSIONS",event:"Purchase",pixel:true,minBudget:15,cboTavsiya:true,desc:"Purchase eventi."},
- "Lead (so'rovlar) yig'ish":{objective:"LEAD_GENERATION",event:"Lead",pixel:false,minBudget:8,cboTavsiya:false,desc:"Forma orqali lead."},
- "Brend taniqliligini oshirish":{objective:"BRAND_AWARENESS",event:null,pixel:false,minBudget:5,cboTavsiya:false,desc:"CPM asosida."},
- "Onlayn do'kon trafigi":{objective:"TRAFFIC",event:"ViewContent",pixel:true,minBudget:5,cboTavsiya:false,desc:"CPC asosida."},
- "Messenger / Telegram orqali savdo":{objective:"MESSAGES",event:null,pixel:false,minBudget:8,cboTavsiya:false,desc:"Messenger."}
+  "Sotuvni oshirish (konversiya)":{objective:"CONVERSIONS",event:"Purchase",pixel:true,minBudget:15,cboTavsiya:true,desc:"Purchase eventi."},
+  "Lead sovrovlar yigish":{objective:"LEAD_GENERATION",event:"Lead",pixel:false,minBudget:8,cboTavsiya:false,desc:"Forma orqali lead."},
+  "Brend taniqliligini oshirish":{objective:"BRAND_AWARENESS",event:null,pixel:false,minBudget:5,cboTavsiya:false,desc:"CPM asosida."},
+  "Onlayn dokon trafigi":{objective:"TRAFFIC",event:"ViewContent",pixel:true,minBudget:5,cboTavsiya:false,desc:"CPC asosida."},
+  "Messenger Telegram savdo":{objective:"MESSAGES",event:null,pixel:false,minBudget:8,cboTavsiya:false,desc:"Messenger."}
 };
 function getAudienceStrategy(d){var t=d.budget<200?"low":d.budget<600?"mid":"high";var b=[{name:"🔥 Retargeting",desc:"Sahifaga kirgan lekin sotib olmagan.",type:"Pixel",size:"1K-20K",cpl:"Eng past",budjet_ulush:t==="low"?"40%":"30%"},{name:"👥 Lookalike 1%",desc:"Mavjud mijozlarga oxshash 1%.",type:"Lookalike",size:"50K-300K",cpl:"Past",budjet_ulush:t==="low"?"30%":"35%"},{name:"🎯 Interest",desc:"Meta interest: "+d.nisha,type:"Interest",size:"100K-500K",cpl:"Orta",budjet_ulush:t==="low"?"20%":"25%"},{name:"🌐 Broad",desc:"Meta ozi auditoriya topadi.",type:"Broad",size:"2M-10M",cpl:"Yuqori",budjet_ulush:t==="high"?"10%":"0%"}];return t==="low"?b.slice(0,3):b;}
 function getBudgetStrategy(budget,goal){if(goal.includes("konversiya")||goal.includes("Purchase"))return [{name:"🔥 Retargeting",pct:30,goal:"Issiq auditoriya",stavka:"Lowest Cost"},{name:"👥 Lookalike",pct:40,goal:"Oxshash auditoriya",stavka:"Lowest Cost"},{name:"🎯 Interest",pct:20,goal:"Yangi auditoriya",stavka:"Lowest Cost"},{name:"🧪 Test",pct:10,goal:"Creative aniqlash",stavka:"Lowest Cost"}];if(goal.includes("Lead"))return [{name:"🎯 Lead Form",pct:50,goal:"Asosiy lead",stavka:"Lowest Cost"},{name:"👥 Lookalike",pct:35,goal:"Keng auditoriya",stavka:"Lowest Cost"},{name:"🧪 Test",pct:15,goal:"Creative test",stavka:"Lowest Cost"}];return [{name:"🌐 Asosiy",pct:60,goal:"Asosiy maqsad",stavka:"Lowest Cost"},{name:"👥 Lookalike",pct:25,goal:"Oxshash",stavka:"Lowest Cost"},{name:"🧪 Test",pct:15,goal:"Test",stavka:"Lowest Cost"}];}
@@ -1414,6 +1647,5 @@ function getCampaignName(d){var dt=new Date().toISOString().slice(0,7),g=d.geo.i
 function getCopywritingFramework(d){var m=MASLOW[d.nisha]||{daraja:3,motiv:"Qulaylik",trigger:"Natija"};return{formula:"AIDA",maslow_daraja:m.daraja,asosiy_motiv:m.motiv,hook:m.trigger,matn_tuzilma:["HOOK: "+m.trigger,"MUAMMO","YECHIM","DALIL","CTA"]};}
 function getFunnelMetrics(d){var db=d.budget/30,cpm=d.geo.includes("Toshkent")?2.5:1.8,ctr=1.5,lpr=d.conversion;var imp=Math.round((db/cpm)*1000),cl=Math.round(imp*ctr/100),lds=Math.round(cl*lpr/100),cpc=cl>0?(db/cl).toFixed(2):"0",cpl=lds>0?(db/lds).toFixed(2):"0";return{impressions:imp,clicks:cl,leads:lds,cpc:cpc,cpl_calc:cpl,cpm:cpm,voronka:[{bosqich:"Impressions",qiymat:imp.toLocaleString(),desc:"CPM: $"+cpm},{bosqich:"Clicks",qiymat:cl.toLocaleString(),desc:"CTR: "+ctr+"%"},{bosqich:"Landing",qiymat:cl.toLocaleString(),desc:"Click=Visit"},{bosqich:"Leads",qiymat:lds.toLocaleString(),desc:"LPR: "+lpr+"%"+(lpr<2?" ⚠️":" ✅")},{bosqich:"CPL",qiymat:"$"+cpl,desc:"Maqsad: $"+d.cpa+" "+(parseFloat(cpl)<=d.cpa?"✅":"⚠️")}]};}
 document.addEventListener("DOMContentLoaded",function(){var sd=document.getElementById("start-date");if(sd)sd.value=new Date().toISOString().split("T")[0];});
-
 </script>
 </body>
