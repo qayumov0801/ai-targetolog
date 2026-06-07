@@ -195,6 +195,7 @@ function aiComment({ cpl, cpaTarget, ctr, leads }) {
 // =====================================================================
 const app = express();
 const PORT = process.env.PORT || 3001;
+app.set('trust proxy', 1); // Render/hosting proxy ortida — rate-limit X-Forwarded-For uchun
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
