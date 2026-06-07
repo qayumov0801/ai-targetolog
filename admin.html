@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — AI Targetolog</title>
+<style>
+:root{--primary:#6C3CE1;--primary-light:#8B5CF6;--accent:#F59E0B;--success:#10B981;--danger:#EF4444;--warning:#F59E0B;--bg:#0F0A1E;--bg2:#1A1035;--bg3:#251848;--card:#1E1540;--border:#2D1F5E;--text:#E2D9FF;--text2:#9B8EC4;--text3:#6B5E9C;--white:#fff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.wrap{max-width:1100px;margin:0 auto;padding:24px;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.title{font-size:22px;font-weight:800;color:var(--white);display:flex;align-items:center;gap:10px;}
+.badge{background:var(--accent);color:#1a1a1a;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.btn{padding:10px 18px;border-radius:9px;border:none;cursor:pointer;font-size:14px;font-weight:600;background:var(--primary);color:#fff;transition:.2s;}
+.btn:hover{background:var(--primary-light);}
+.btn-out{background:transparent;border:1px solid var(--border);color:var(--text2);}
+.login-box{max-width:380px;margin:80px auto;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px;text-align:center;}
+.login-box h1{font-size:22px;color:var(--white);margin-bottom:6px;}
+.login-box p{font-size:13px;color:var(--text2);margin-bottom:24px;}
+.inp{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--white);font-size:15px;margin-bottom:12px;outline:none;}
+.inp:focus{border-color:var(--primary-light);}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.stat .v{font-size:30px;font-weight:800;color:var(--white);}
+.stat .l{font-size:13px;color:var(--text2);margin-top:4px;}
+.stat .s{font-size:12px;color:var(--success);margin-top:6px;}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.tab{padding:8px 16px;border-radius:8px;background:var(--bg3);color:var(--text2);cursor:pointer;font-size:13px;font-weight:600;border:1px solid var(--border);}
+.tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:8px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:var(--bg3);padding:11px 12px;text-align:left;color:var(--text2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+td{padding:11px 12px;border-top:1px solid var(--border);color:var(--text);white-space:nowrap;}
+tr:hover td{background:rgba(108,60,225,.05);}
+.pill{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.pill.admin{background:rgba(245,158,11,.18);color:var(--accent);}
+.pill.user{background:rgba(108,60,225,.18);color:var(--primary-light);}
+.muted{color:var(--text3);}
+.err{color:var(--danger);font-size:13px;margin-top:8px;min-height:18px;}
+.empty{text-align:center;color:var(--text3);padding:30px;font-size:14px;}
+.toolbar{display:flex;gap:10px;margin-bottom:14px;align-items:center;}
+.search{flex:1;max-width:300px;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--white);outline:none;font-size:13px;}
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login-box">
+  <h1>🛡️ Admin Panel</h1>
+  <p>AI Targetolog — boshqaruv paneli</p>
+  <input class="inp" type="email" id="email" placeholder="Admin email">
+  <input class="inp" type="password" id="pass" placeholder="Parol">
+  <button class="btn" style="width:100%" onclick="login()">Kirish</button>
+  <div class="err" id="login-err"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash" class="wrap hidden">
+  <div class="header">
+    <div class="title">🛡️ Admin Panel <span class="badge">AI Targetolog</span></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span class="muted" id="who" style="font-size:13px"></span>
+      <button class="btn btn-out" onclick="refresh()">↻ Yangilash</button>
+      <button class="btn btn-out" onclick="logout()">Chiqish</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="users" onclick="showTab('users')">👥 Foydalanuvchilar</div>
+    <div class="tab" data-tab="campaigns" onclick="showTab('campaigns')">📊 Kampaniyalar</div>
+  </div>
+
+  <div id="tab-users">
+    <div class="toolbar"><input class="search" id="usearch" placeholder="🔍 Ism, email yoki telefon..." oninput="renderUsers()"></div>
+    <div class="card"><table><thead><tr>
+      <th>#</th><th>Ism</th><th>Email</th><th>Telefon</th><th>Rol</th><th>Kampaniya</th><th>Ro'yxatdan o'tgan</th><th>Oxirgi kirish</th>
+    </tr></thead><tbody id="users-body"></tbody></table>
+    <div class="empty hidden" id="users-empty">Foydalanuvchilar yo'q</div></div>
+  </div>
+
+  <div id="tab-campaigns" class="hidden">
+    <div class="card"><table><thead><tr>
+      <th>#</th><th>Kampaniya</th><th>Egasi</th><th>Nisha</th><th>Budjet</th><th>Geo</th><th>Holat</th><th>Sana</th>
+    </tr></thead><tbody id="camp-body"></tbody></table>
+    <div class="empty hidden" id="camp-empty">Kampaniyalar yo'q</div></div>
+  </div>
+</div>
+
+<script>
+var API_URL = (location.hostname==='localhost'||location.hostname==='127.0.0.1') ? 'http://localhost:3001/api' : 'https://ai-targetolog.onrender.com/api';
+var TK = 'ait_admin_token';
+var data = { users: [], campaigns: [] };
+
+async function api(path, opts){
+  opts = opts || {};
+  opts.headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  var t = localStorage.getItem(TK);
+  if (t) opts.headers['Authorization'] = 'Bearer ' + t;
+  var r = await fetch(API_URL + path, opts);
+  var d = await r.json();
+  if (!r.ok) throw new Error(d.error || ('Xato ' + r.status));
+  return d;
+}
+
+async function login(){
+  var email = document.getElementById('email').value.trim();
+  var pass = document.getElementById('pass').value;
+  var err = document.getElementById('login-err');
+  err.textContent = '';
+  if (!email || !pass) { err.textContent = 'Email va parol kiriting'; return; }
+  try {
+    var d = await api('/auth/login', { method:'POST', body: JSON.stringify({ email: email, password: pass }) });
+    if (!d.user || d.user.role !== 'admin') { err.textContent = '⛔ Bu akkaunt admin emas'; return; }
+    localStorage.setItem(TK, d.token);
+    document.getElementById('who').textContent = d.user.name + ' (' + d.user.email + ')';
+    enterDash();
+  } catch(e) { err.textContent = '❌ ' + e.message; }
+}
+
+function logout(){ localStorage.removeItem(TK); location.reload(); }
+
+async function enterDash(){
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('dash').classList.remove('hidden');
+  await refresh();
+}
+
+async function refresh(){
+  try {
+    var s = await api('/admin/stats');
+    document.getElementById('stats').innerHTML =
+      stat(s.users.total, 'Jami foydalanuvchi', '+' + s.users.last7 + ' (7 kun)') +
+      stat(s.users.today, 'Bugun qo\'shilgan', '') +
+      stat(s.campaigns.total, 'Kampaniyalar', '') +
+      stat(s.reports.total, 'Hisobotlar', '');
+    var u = await api('/admin/users'); data.users = u.users || [];
+    renderUsers();
+    var c = await api('/admin/campaigns'); data.campaigns = c.campaigns || [];
+    renderCampaigns();
+  } catch(e) {
+    if (/admin|401|Token/i.test(e.message)) { alert('Sessiya tugadi yoki admin emas'); logout(); }
+    else alert('Xato: ' + e.message);
+  }
+}
+
+function stat(v,l,s){ return '<div class="stat"><div class="v">'+(v??0)+'</div><div class="l">'+l+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>'; }
+function esc(x){ return (x==null?'':String(x)).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+function dt(x){ if(!x) return '<span class="muted">—</span>'; var d=new Date(x); return d.toLocaleDateString('uz')+' '+d.toLocaleTimeString('uz',{hour:'2-digit',minute:'2-digit'}); }
+
+function renderUsers(){
+  var qv = (document.getElementById('usearch').value||'').toLowerCase();
+  var rows = data.users.filter(function(u){ return !qv || [u.name,u.email,u.phone].some(function(f){ return (f||'').toLowerCase().includes(qv); }); });
+  var b = document.getElementById('users-body');
+  document.getElementById('users-empty').classList.toggle('hidden', rows.length>0);
+  b.innerHTML = rows.map(function(u){
+    return '<tr><td>'+u.id+'</td><td>'+esc(u.name)+'</td><td>'+(esc(u.email)||'<span class=muted>—</span>')+'</td><td>'+(esc(u.phone)||'<span class=muted>—</span>')+'</td>'+
+      '<td><span class="pill '+(u.role==='admin'?'admin':'user')+'">'+u.role+'</span></td>'+
+      '<td>'+u.campaigns+'</td><td>'+dt(u.created_at)+'</td><td>'+dt(u.last_login)+'</td></tr>';
+  }).join('');
+}
+
+function renderCampaigns(){
+  var rows = data.campaigns;
+  var b = document.getElementById('camp-body');
+  document.getElementById('camp-empty').classList.toggle('hidden', rows.length>0);
+  b.innerHTML = rows.map(function(c){
+    return '<tr><td>'+c.id+'</td><td>'+esc(c.name)+'</td><td>'+esc(c.user_name)+'<br><span class=muted style="font-size:11px">'+esc(c.user_email)+'</span></td>'+
+      '<td>'+esc(c.nisha)+'</td><td>$'+(c.budget||0)+'</td><td>'+esc(c.geo)+'</td><td>'+esc(c.status)+'</td><td>'+dt(c.created_at)+'</td></tr>';
+  }).join('');
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(function(el){ el.classList.toggle('active', el.dataset.tab===t); });
+  document.getElementById('tab-users').classList.toggle('hidden', t!=='users');
+  document.getElementById('tab-campaigns').classList.toggle('hidden', t!=='campaigns');
+}
+
+// Avtomatik: token bo'lsa to'g'ridan-to'g'ri kirish
+(function(){
+  if (localStorage.getItem(TK)) {
+    api('/auth/me').then(function(d){
+      if (d.user && d.user.role==='admin') { document.getElementById('who').textContent = d.user.name; enterDash(); }
+      else localStorage.removeItem(TK);
+    }).catch(function(){ localStorage.removeItem(TK); });
+  }
+})();
+</script>
+</body>
+</html>
