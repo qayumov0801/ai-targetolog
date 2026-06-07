@@ -217,6 +217,7 @@ auth.post('/google', (req, res) => {
     res.json({ token: signToken(u.id), user: { id: u.id, name: u.name, email: u.email, avatar: u.avatar } });
   } catch (e) { res.status(500).json({ error: 'Server xatosi' }); }
 });
+const smsConfigured = !!(process.env.ESKIZ_TOKEN || (process.env.ESKIZ_EMAIL && process.env.ESKIZ_PASSWORD));
 auth.post('/send-otp', (req, res) => {
   const { phone } = req.body;
   if (!phone || phone.length < 9) return res.status(400).json({ error: "To'g'ri telefon raqam kiriting" });
@@ -224,7 +225,9 @@ auth.post('/send-otp', (req, res) => {
   db.prepare('UPDATE otp_codes SET used=1 WHERE contact=? AND used=0').run(cp);
   db.prepare('INSERT INTO otp_codes (contact, code, expires_at) VALUES (?,?,?)').run(cp, code, exp);
   sendOTP(cp, code);
-  res.json({ success: true, message: 'OTP yuborildi', debug_code: process.env.NODE_ENV !== 'production' ? code : undefined });
+  // SMS provayder sozlanmagan bo'lsa, kodni javobda qaytaramiz (demo rejim).
+  // Eskiz ulanganda kod yashiriladi va real SMS yuboriladi.
+  res.json({ success: true, sms: smsConfigured, message: 'OTP yuborildi', dev_code: smsConfigured ? undefined : code });
 });
 auth.post('/verify-otp', (req, res) => {
   const { phone, code, name } = req.body;

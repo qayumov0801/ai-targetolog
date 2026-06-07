@@ -37,7 +37,7 @@
    <button class="auth-btn auth-btn-phone" onclick="verifyOTP()" style="margin-top:0">
     ✅ Kodni tasdiqlash
    </button>
-   <div style="font-size:12px;color:var(--text3);margin-top:6px;text-align:center">Kod 5 daqiqa amal qiladi</div>
+   <div id="otp-hint" style="font-size:12px;color:var(--text3);margin-top:6px;text-align:center">Kod 5 daqiqa amal qiladi</div>
   </div>
  </div>
 
@@ -670,9 +670,12 @@ function authGoogle() {
     });
     google.accounts.id.prompt();
   } else {
-    // Fallback: ism + email bilan tez kirish
+    // Google OAuth hali sozlanmagan — email + parol bilan ro'yxatdan o'tishga yo'naltiramiz
     document.getElementById('email-form').classList.remove('hidden');
-    document.getElementById('phone-form').classList.add('hidden');
+    document.getElementById('phone-form').classList.remove('show');
+    var n = document.getElementById('email-name-input');
+    if (n) n.focus();
+    showToast('Email va parol bilan ro\'yxatdan o\'ting 👇');
   }
 }
 
@@ -702,8 +705,16 @@ async function authPhone() {
     // OTP kiritish qismini ko'rsat
     var otpStep = document.getElementById('otp-step');
     if (otpStep) otpStep.classList.remove('hidden');
-    // Dev modeda konsolda ko'rinadi
-    if (data.debug_code) console.log('OTP:', data.debug_code);
+    // SMS sozlanmagan bo'lsa (demo rejim) — kodni ekranda ko'rsatamiz va avtomatik to'ldiramiz
+    var code = data.dev_code || data.debug_code;
+    var hint = document.getElementById('otp-hint');
+    if (code) {
+      var inp = document.getElementById('otp-input');
+      if (inp) inp.value = code;
+      if (hint) hint.innerHTML = "🔑 Test rejimi — kodingiz: <b style='color:var(--white);font-size:16px'>" + code + "</b><br>(SMS hali ulanmagan. \"Kodni tasdiqlash\"ni bosing.)";
+    } else if (hint) {
+      hint.textContent = "Kod telefoningizga SMS orqali yuborildi (5 daqiqa amal qiladi).";
+    }
   } catch(e) {
     showToast(e.message, 'warning');
   } finally {
