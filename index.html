@@ -73,12 +73,14 @@
 
 <div class="onboard-screen hidden" id="access-screen">
  <div class="onboard-box" style="max-width:500px;text-align:left">
- <div class="onboard-step">ULANISH</div>
- <div class="onboard-q" style="font-size:18px">Reklama akkauntingizni ulang</div>
- <div class="onboard-sub" style="margin-bottom:20px">Quyidagi ma'lumotlarni kiriting — biz faqat tahlil uchun foydalanamiz</div>
+ <div class="onboard-step">ULANISH (IXTIYORIY)</div>
+ <div class="onboard-q" style="font-size:18px">Reklama akkauntingizni ulaysizmi?</div>
+ <div class="onboard-sub" style="margin-bottom:16px">Bu <strong style="color:var(--text2)">majburiy emas</strong> — hoziroq sinab ko'rish uchun pastdagi <strong style="color:var(--primary-light)">"O'tkazib yuborish"</strong>ni bosing. Keyinroq ham ulashingiz mumkin.</div>
+
+ <div style="font-size:12px;color:var(--text3);background:rgba(16,185,129,0.08);border-radius:8px;padding:9px 12px;margin-bottom:18px">🔒 Ma'lumotlaringiz xavfsiz saqlanadi va faqat sizning hisobingizda ko'rinadi.</div>
 
  <div style="margin-bottom:14px">
- <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Ad Account ID <span style="color:var(--danger)">*</span></label>
+ <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Ad Account ID <span style="color:var(--text3)">(ixtiyoriy)</span></label>
  <input id="acc-id" type="text" placeholder="act_123456789012345"
  style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
  border-radius:10px;color:var(--white);font-size:14px;outline:none;font-family:monospace">
@@ -117,14 +119,18 @@
  </div>
  </details>
 
+ <button onclick="skipAccess()" style="width:100%;padding:14px;background:var(--primary);
+ border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">
+ O'tkazib yuborish va boshlash →
+ </button>
  <div style="display:flex;gap:10px">
- <button onclick="backToOnboard()" style="flex:0 0 auto;padding:13px 18px;background:transparent;
- border:1px solid var(--border);border-radius:10px;color:var(--text2);cursor:pointer;font-size:14px">
+ <button onclick="backToOnboard()" style="flex:0 0 auto;padding:11px 16px;background:transparent;
+ border:1px solid var(--border);border-radius:10px;color:var(--text3);cursor:pointer;font-size:13px">
  ← Orqaga
  </button>
- <button onclick="saveAccessAndContinue()" style="flex:1;padding:13px;background:var(--primary);
- border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer">
- ✅ Davom etish
+ <button onclick="saveAccessAndContinue()" style="flex:1;padding:11px;background:transparent;
+ border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:13px;cursor:pointer">
+ Ma'lumotni saqlab davom etish
  </button>
  </div>
  </div>
@@ -795,26 +801,34 @@ function onboardYes() {
  document.getElementById('access-screen').classList.remove('hidden');
 }
 
+// O'tkazib yuborish — to'g'ridan-to'g'ri ilovaga
+function skipAccess() {
+  document.getElementById('access-screen').classList.add('hidden');
+  showMainApp();
+  showToast('✅ Boshladik!');
+}
+
 async function saveAccessAndContinue() {
   var accId = document.getElementById('acc-id').value.trim();
-  if (!accId) { document.getElementById('acc-id').style.borderColor = 'var(--danger)'; return; }
-  if (!accId.startsWith('act_')) accId = 'act_' + accId;
+  if (accId && !accId.startsWith('act_')) accId = 'act_' + accId;
   var bmId = document.getElementById('bm-id').value.trim();
   var pageName = document.getElementById('page-name').value.trim();
-  state.fbAccess = { accId, bmId, pageName };
+  state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName };
+
+  // Hech narsa kiritilmagan bo'lsa — shunchaki o'tkazib yuboramiz
+  if (!accId && !bmId && !pageName) { skipAccess(); return; }
 
   // Backend ga saqlash (token bo'lsa)
   var tk = localStorage.getItem(TOKEN_KEY);
   if (tk) {
-    try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId, bm_id: bmId, page_name: pageName }); }
-    catch(e) { console.warn('FB ma\'lumotlari saqlanmadi:', e.message); }
+    try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId || null, bm_id: bmId || null, page_name: pageName || null }); }
+    catch(e) { console.warn('Saqlanmadi:', e.message); }
   }
 
   if (pageName && document.getElementById('biz-name')) document.getElementById('biz-name').value = pageName;
   document.getElementById('access-screen').classList.add('hidden');
-  document.getElementById('analysis-prev-screen').classList.remove('hidden');
-  var showEl = document.getElementById('show-acc-id');
-  if (showEl) showEl.textContent = accId;
+  showMainApp();
+  showToast(accId ? '✅ Akkaunt ulandi!' : '✅ Saqlandi!');
 }
 
 function skipPrevAnalysis() {
@@ -1035,9 +1049,10 @@ function analyzePrevCampaigns() {
 }
 
 function onboardNo() {
- // Hech reklama yoqmagan — Telegram ga yo'naltir
+ // Yangi boshlovchi — to'g'ridan-to'g'ri ilovaga (hech qanday to'siqsiz)
  document.getElementById('onboard-screen').classList.add('hidden');
- document.getElementById('tg-screen').classList.remove('hidden');
+ showMainApp();
+ showToast('✅ Boshladik! Birinchi loyihangizni kiriting');
 }
 
 function backToOnboard() {
