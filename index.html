@@ -79,6 +79,26 @@
 
  <div style="font-size:12px;color:var(--text3);background:rgba(16,185,129,0.08);border-radius:8px;padding:9px 12px;margin-bottom:18px">🔒 Ma'lumotlaringiz xavfsiz saqlanadi va faqat sizning hisobingizda ko'rinadi.</div>
 
+ <!-- ===== FACEBOOK BILAN ULASH (avtomatik) ===== -->
+ <div id="fb-connect-block" style="display:none;margin-bottom:18px">
+ <button onclick="fbConnect()" id="fb-connect-btn" style="width:100%;padding:14px;background:#1877F2;
+ border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer;
+ display:flex;align-items:center;justify-content:center;gap:10px">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+ Facebook bilan ulash
+ </button>
+ <div style="font-size:11px;color:var(--text3);margin-top:7px;text-align:center">Reklama akkauntlaringiz avtomatik topiladi — ID yozish shart emas</div>
+
+ <!-- Akkaunt tanlash (login'dan keyin) -->
+ <div id="fb-accounts" style="display:none;margin-top:14px">
+ <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Reklama akkauntini tanlang:</label>
+ <select id="fb-acc-select" style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--primary-light);border-radius:10px;color:var(--white);font-size:14px;outline:none"></select>
+ <button onclick="fbSelectAccount()" style="width:100%;margin-top:10px;padding:12px;background:var(--success);border:none;border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer">✅ Shu akkauntni ulash va boshlash</button>
+ </div>
+
+ <div class="auth-divider" style="margin:16px 0">yoki qo'lda kiriting</div>
+ </div>
+
  <div style="margin-bottom:14px">
  <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Ad Account ID <span style="color:var(--text3)">(ixtiyoriy)</span></label>
  <input id="acc-id" type="text" placeholder="act_123456789012345"
@@ -605,6 +625,27 @@ var API_URL = window.location.hostname === 'localhost' || window.location.hostna
 var TOKEN_KEY = 'ait_token';
 var USER_KEY = 'ait_user';
 
+// ===== FACEBOOK LOGIN =====
+// Facebook App ID (developers.facebook.com da yaratilgach shu yerga yoziladi).
+// Ochiq kalit (maxfiy emas). Bo'sh bo'lsa "Facebook bilan ulash" tugmasi yashiriladi.
+var FB_APP_ID = '983469214391721';
+var FB_READY = false;
+function loadFacebookSDK() {
+  if (!FB_APP_ID) return; // App ID yo'q — tugmani ko'rsatmaymiz
+  window.fbAsyncInit = function() {
+    FB.init({ appId: FB_APP_ID, cookie: true, xfbml: false, version: 'v21.0' });
+    FB_READY = true;
+    var b = document.getElementById('fb-connect-block');
+    if (b) b.style.display = 'block';
+  };
+  (function(d, s, id){
+    if (d.getElementById(id)) return;
+    var js = d.createElement(s); js.id = id;
+    js.src = 'https://connect.facebook.net/en_US/sdk.js';
+    d.getElementsByTagName('head')[0].appendChild(js);
+  }(document, 'script', 'facebook-jssdk'));
+}
+
 // ===== GLOBAL STATE (yuqorida — yuklanishdagi funksiyalar undan oldin ishlamasligi uchun) =====
 var state = {
  step: 1,
@@ -806,6 +847,58 @@ function skipAccess() {
   document.getElementById('access-screen').classList.add('hidden');
   showMainApp();
   showToast('✅ Boshladik!');
+}
+
+// ===== FACEBOOK BILAN ULASH =====
+function fbConnect() {
+  if (typeof FB === 'undefined' || !FB_READY) { showToast('Facebook hali yuklanmadi, biroz kuting', 'warning'); return; }
+  var btn = document.getElementById('fb-connect-btn');
+  if (btn) btn.textContent = '⏳ Ulanmoqda...';
+  FB.login(function(resp) {
+    if (resp && resp.authResponse) {
+      state.fbToken = resp.authResponse.accessToken;
+      FB.api('/me/adaccounts', { fields: 'name,account_id,business{name,id}' }, function(r) {
+        var sel = document.getElementById('fb-acc-select');
+        sel.innerHTML = '';
+        if (r && r.data && r.data.length) {
+          r.data.forEach(function(a) {
+            var biz = a.business ? a.business.name : '';
+            var o = document.createElement('option');
+            o.value = a.account_id;
+            o.setAttribute('data-bm', a.business ? a.business.id : '');
+            o.setAttribute('data-name', a.name || biz || 'Akkaunt');
+            o.textContent = (a.name || 'Akkaunt') + (biz ? ' — ' + biz : '') + ' (act_' + a.account_id + ')';
+            sel.appendChild(o);
+          });
+          document.getElementById('fb-accounts').style.display = 'block';
+          if (btn) btn.textContent = '✅ Ulandi! Akkauntni tanlang';
+          showToast('✅ ' + r.data.length + ' ta reklama akkaunti topildi');
+        } else {
+          if (btn) btn.textContent = '📘 Facebook bilan ulash';
+          showToast('Reklama akkaunti topilmadi yoki ruxsat berilmadi', 'warning');
+        }
+      });
+    } else {
+      if (btn) btn.textContent = '📘 Facebook bilan ulash';
+      showToast('Ulanish bekor qilindi', 'warning');
+    }
+  }, { scope: 'ads_read,business_management' });
+}
+
+async function fbSelectAccount() {
+  var sel = document.getElementById('fb-acc-select');
+  var opt = sel.options[sel.selectedIndex];
+  if (!opt) { showToast('Akkaunt tanlang', 'warning'); return; }
+  var accId = 'act_' + opt.value;
+  var bmId = opt.getAttribute('data-bm') || '';
+  var pageName = opt.getAttribute('data-name') || '';
+  state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName };
+  var tk = localStorage.getItem(TOKEN_KEY);
+  if (tk) { try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId, bm_id: bmId, page_name: pageName }); } catch(e) {} }
+  if (document.getElementById('biz-name')) document.getElementById('biz-name').value = pageName;
+  document.getElementById('access-screen').classList.add('hidden');
+  showMainApp();
+  showToast('✅ Facebook ulandi: ' + accId);
 }
 
 async function saveAccessAndContinue() {
@@ -1672,6 +1765,6 @@ function getCreativeList(nisha,goal,count){var m=MASLOW[nisha]||{trigger:"Hook"}
 function getCampaignName(d){var dt=new Date().toISOString().slice(0,7),g=d.geo.includes("Toshkent shahri")?"TSH":"UZ",goal=d.goal.includes("konversiya")?"CONV":d.goal.includes("Lead")?"LEAD":"MSG";return (d.bizName||"BRAND")+"_"+g+"_"+goal+"_"+dt;}
 function getCopywritingFramework(d){var m=MASLOW[d.nisha]||{daraja:3,motiv:"Qulaylik",trigger:"Natija"};return{formula:"AIDA",maslow_daraja:m.daraja,asosiy_motiv:m.motiv,hook:m.trigger,matn_tuzilma:["HOOK: "+m.trigger,"MUAMMO","YECHIM","DALIL","CTA"]};}
 function getFunnelMetrics(d){var db=d.budget/30,cpm=d.geo.includes("Toshkent")?2.5:1.8,ctr=1.5,lpr=d.conversion;var imp=Math.round((db/cpm)*1000),cl=Math.round(imp*ctr/100),lds=Math.round(cl*lpr/100),cpc=cl>0?(db/cl).toFixed(2):"0",cpl=lds>0?(db/lds).toFixed(2):"0";return{impressions:imp,clicks:cl,leads:lds,cpc:cpc,cpl_calc:cpl,cpm:cpm,voronka:[{bosqich:"Impressions",qiymat:imp.toLocaleString(),desc:"CPM: $"+cpm},{bosqich:"Clicks",qiymat:cl.toLocaleString(),desc:"CTR: "+ctr+"%"},{bosqich:"Landing",qiymat:cl.toLocaleString(),desc:"Click=Visit"},{bosqich:"Leads",qiymat:lds.toLocaleString(),desc:"LPR: "+lpr+"%"+(lpr<2?" ⚠️":" ✅")},{bosqich:"CPL",qiymat:"$"+cpl,desc:"Maqsad: $"+d.cpa+" "+(parseFloat(cpl)<=d.cpa?"✅":"⚠️")}]};}
-document.addEventListener("DOMContentLoaded",function(){var sd=document.getElementById("start-date");if(sd)sd.value=new Date().toISOString().split("T")[0];});
+document.addEventListener("DOMContentLoaded",function(){var sd=document.getElementById("start-date");if(sd)sd.value=new Date().toISOString().split("T")[0];loadFacebookSDK();});
 </script>
 </body>
