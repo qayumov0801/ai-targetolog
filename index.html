@@ -1707,6 +1707,39 @@ const MASLOW = {
  "Boshqa": { daraja: 3, motiv: "Qulaylik", trigger: "Muammo → Yechim" }
 };
 
+// ── Reklama akkauntini blokdan himoya qilish checklisti ──
+function getBlockProtectionChecklist() {
+ return [
+  { cat: "Akkaunt ishonchliligi", items: [
+    "Business Manager yaratilgan va tasdiqlangan",
+    "Domen (sayt) Facebook'da tasdiqlangan (Domain Verification)",
+    "2 bosqichli himoya (2FA) yoqilgan",
+    "Telefon raqam va email tasdiqlangan"
+  ]},
+  { cat: "Reklama siyosati (Meta Policy)", items: [
+    "Shaxsiy xususiyatga to'g'ridan-to'g'ri murojaat yo'q ('Sizning ortiqcha vazningiz...' kabi)",
+    "Tibbiy davo yoki '100% kafolat' va'dalari yo'q",
+    "Before/After (avval-keyin) tana/og'irlik rasmlari ishlatilmagan",
+    "Kamsitish, yolg'on yoki sensatsion da'volar yo'q"
+  ]},
+  { cat: "To'lov va byudjet", items: [
+    "Ishonchli to'lov usuli ulangan",
+    "Spending limit bosqichma-bosqich oshiriladi",
+    "Bir kunda byudjet keskin (2x+) oshirilmaydi"
+  ]},
+  { cat: "Texnik (Pixel & Landing)", items: [
+    "Meta Pixel to'g'ri ulangan va event'lar ishlaydi",
+    "Landing sayt tez ochiladi va reklama va'dasiga mos",
+    "Saytda Maxfiylik siyosati (Privacy Policy) bor"
+  ]},
+  { cat: "Akkauntni isitish (Warm-up)", items: [
+    "Yangi akkaunt sekin isitiladi (kichik byudjetdan)",
+    "Bir vaqtning o'zida ko'p reklama yoqilmaydi",
+    "Learning phase'da tez-tez tahrir qilinmaydi"
+  ]}
+ ];
+}
+
 // ── META ALGORITM GIPOTEZA USULI (Target Pro 5-hafta + Oltin Nisbat) ──
 const META_ALGORITHM_KNOWLEDGE = {
  tamoyillar: [
