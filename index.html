@@ -295,8 +295,8 @@
  </div>
 
  <div class="form-group full">
- <label>Mahsulot / Taklif (offer)</label>
- <textarea id="offer" placeholder="Nima sotasiz? Asosiy afzallik nima? Narx qancha?"></textarea>
+ <label>Xizmat yoki mahsulot haqida qisqacha ma'lumot bering</label>
+ <textarea id="offer" placeholder="Nima taklif qilasiz? Asosiy afzallik nima? Narxi qancha? (qisqacha yozing)"></textarea>
  </div>
 
  <div class="form-group">
@@ -433,22 +433,8 @@
  <div id="budget-split"></div>
  </div>
 
- <div class="card">
- <div class="card-title">⚠️ Xatarlar va Feedbacklar</div>
- <div id="ai-risks"></div>
- </div>
-
- <div class="card">
- <div class="card-title">🔢 Kunlik Voronka Metrikasi</div>
- <div class="card-sub">Qisqa voronka — har kuni kuzatadigan asosiy ko'rsatkichlar</div>
- <div id="funnel-metrics"></div>
- </div>
-
- <div class="card">
- <div class="card-title">🛡️ Blokdan Himoyalanish Cheklisti</div>
- <div class="card-sub">Kampaniya boshlashdan avval barcha bandlarni bajarib chiqing</div>
- <div id="block-checklist"></div>
- </div>
+ <!-- Soddalashtirildi: Xatarlar, Voronka, Blok-checklist bo'limlari olib tashlandi (yashirin, JS buzilmasligi uchun saqlanadi) -->
+ <div style="display:none"><div id="ai-risks"></div><div id="funnel-metrics"></div><div id="block-checklist"></div></div>
 
  <div class="flex gap-10" style="justify-content:flex-end">
  <button class="btn btn-outline" onclick="goStep(1)">← Tahrirlash</button>
@@ -1264,13 +1250,6 @@ function generateAnalysis() {
  <strong style="color:var(--white)">${d.bizName}</strong> — <em>${d.nisha}</em> nishasida ishlaydi.
  Oylik <strong>$${d.budget}</strong> budjet | <strong>${d.geo}</strong> | Maqsad: <strong>${goal2text(d.goal)}</strong><br><br>
 
- <div style="background:rgba(108,60,225,0.12);border-radius:8px;padding:12px;margin:10px 0">
- <strong style="color:var(--accent)">🧠 Maslow Tahlili (${maslow.daraja}-daraja ehtiyoj)</strong><br>
- <span style="color:var(--text2)">Asosiy motiv:</span> <strong>${maslow.motiv}</strong><br>
- <span style="color:var(--text2)">Hook strategiyasi:</span> "${maslow.trigger}"<br>
- <span style="color:var(--text2)">Matn formati:</span> AIDA — Attention → Interest → Desire → Action
- </div>
-
  <div style="background:rgba(16,185,129,0.08);border-radius:8px;padding:12px;margin:10px 0">
  <strong style="color:var(--success)">📊 Raqobat & Bozor</strong><br>
  ${d.nisha} nishasida Meta Ads raqobati: ${raqobat(d.nisha)}<br>
@@ -1419,10 +1398,24 @@ function generateAnalysis() {
 }
 
 // ===== STEP 3: LAUNCH =====
-function launchCampaign() {
+async function launchCampaign() {
  state.campaignActive = true;
  document.getElementById('tab-3').classList.add('completed');
  showToast('✅ Kampaniya yoqildi! Kunlik hisobotlar boshlandi');
+
+ // Kampaniyani backendga saqlaymiz (kirgan bo'lsa) — admin panelda ko'rinadi
+ var d = state.bizData || {};
+ if (localStorage.getItem(TOKEN_KEY)) {
+ try {
+ var c = await apiCall('POST', '/campaigns', {
+ name: (d.bizName || 'Kampaniya') + ' — ' + (d.nisha || ''),
+ nisha: d.nisha || 'Boshqa', budget: d.budget || 0, geo: d.geo || 'Toshkent',
+ goal: d.goal || '', offer: d.offer || '', conversion: d.conversion || 4
+ });
+ if (c && c.campaign) state.campaignId = c.campaign.id;
+ } catch(e) { console.warn('Kampaniya saqlanmadi:', e.message); }
+ }
+
  generateDailyReports();
  generateOptimization();
  setTimeout(() => goStep(4), 1500);
@@ -1430,70 +1423,86 @@ function launchCampaign() {
 
 function generateDailyReports() {
  const d = state.bizData;
- const dailySpend = (d.budget / 30);
- const days = [];
- const today = new Date();
+ const acc = state.fbAccess;
+ const connected = !!(state.fbToken && acc && acc.accId && typeof FB !== 'undefined');
 
- for (let i = 6; i >= 0; i--) {
- const date = new Date(today);
- date.setDate(date.getDate() - i);
- const spend = (dailySpend * (0.8 + Math.random() * 0.4)).toFixed(2);
- const reach = Math.round(spend * (1100 + Math.random() * 400));
- const clicks = Math.round(spend * (30 + Math.random() * 20));
- const leads = Math.round(clicks * ((d.conversion / 100) * (0.7 + Math.random() * 0.6)));
- const cpc = (spend / clicks).toFixed(2);
- const cpl = leads > 0 ? (spend / leads).toFixed(2) : '—';
- const trend = Math.random() > 0.5 ? 'up' : (Math.random() > 0.5 ? 'down' : 'stable');
-
- days.push({ date: date.toLocaleDateString('uz', {weekday:'short', day:'numeric', month:'short'}),
- iso: date.toISOString().slice(0,10),
- spend, reach, clicks, leads, cpc, cpl, trend });
+ if (!connected) {
+ emptyReports("Real natijalarni ko'rish uchun 1-bosqichda <b style='color:var(--primary-light)'>\"Facebook bilan ulash\"</b>ni bosing. Ulangach, reklamangizning haqiqiy kunlik natijalari shu yerda chiqadi.");
+ return;
  }
 
- // AI optimizatsiya uchun xom ma'lumotni saqlaymiz (eng yangi birinchi)
- state.reportRows = days.slice().reverse().map(x => ({
+ document.getElementById('daily-reports').innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3)"><div class="spinner" style="margin:0 auto 12px"></div>Facebook\'dan real ma\'lumot yuklanmoqda...</div>';
+ var accId = acc.accId.indexOf('act_') === 0 ? acc.accId : 'act_' + acc.accId;
+ FB.api('/' + accId + '/insights',
+ { fields: 'spend,reach,impressions,clicks,ctr,cpc,actions', date_preset: 'last_7d', time_increment: 1, level: 'account', access_token: state.fbToken },
+ function(resp) {
+ if (resp && !resp.error && resp.data && resp.data.length) {
+ var days = resp.data.map(function(r){
+ var leads = leadsFromActions(r.actions);
+ var spend = parseFloat(r.spend || 0);
+ var clicks = parseInt(r.clicks || 0);
+ var reach = parseInt(r.reach || r.impressions || 0);
+ var cpc = clicks > 0 ? +(spend / clicks).toFixed(2) : 0;
+ var cpl = leads > 0 ? +(spend / leads).toFixed(2) : 0;
+ var dt = new Date(r.date_start);
+ return { date: dt.toLocaleDateString('uz', {weekday:'short', day:'numeric', month:'short'}),
+ iso: r.date_start, spend: spend.toFixed(2), reach: reach, clicks: clicks, leads: leads,
+ cpc: cpc.toFixed(2), cpl: cpl > 0 ? cpl.toFixed(2) : '—' };
+ });
+ renderDailyReports(days, d, true);
+ } else if (resp && resp.error) {
+ emptyReports("Facebook ma'lumotini olishda xato: " + (resp.error.message || '') + ". Ruxsat berilganini tekshiring.");
+ } else {
+ emptyReports("Akkaunt ulandi, lekin oxirgi 7 kunda reklama ma'lumoti yo'q. Reklama yoqilгach, real natijalar shu yerda chiqadi.");
+ }
+ });
+}
+
+function leadsFromActions(actions) {
+ if (!actions) return 0; var t = 0;
+ actions.forEach(function(a){ if (/lead|complete_registration|purchase|conversion/i.test(a.action_type)) t += parseInt(a.value || 0); });
+ return t;
+}
+
+function emptyReports(msg) {
+ ['m-spend','m-reach','m-clicks','m-cpc','m-leads','m-cpl'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = '0'; });
+ state.reportRows = [];
+ document.getElementById('daily-reports').innerHTML = '<div style="text-align:center;padding:36px;color:var(--text2);background:var(--bg3);border-radius:10px;line-height:1.7">📭 ' + msg + '</div>';
+}
+
+function renderDailyReports(days, d, real) {
+ state.reportRows = days.slice().reverse().map(function(x){ return {
  report_date: x.iso, spend: parseFloat(x.spend), reach: x.reach, clicks: x.clicks,
  ctr: x.reach > 0 ? +((x.clicks / x.reach) * 100).toFixed(2) : 0,
- cpc: parseFloat(x.cpc), leads: x.leads, cpl: x.cpl === '—' ? 0 : parseFloat(x.cpl)
- }));
-
- // Update overview metrics
- const last = days[days.length-1];
- animateNumber('m-spend', parseFloat(last.spend), 1);
- animateNumber('m-reach', last.reach, 0);
- animateNumber('m-clicks', last.clicks, 0);
- animateNumber('m-cpc', parseFloat(last.cpc), 2);
- animateNumber('m-leads', last.leads, 0);
+ cpc: parseFloat(x.cpc), leads: x.leads, cpl: x.cpl === '—' ? 0 : parseFloat(x.cpl) }; });
+ var last = days[days.length-1] || { spend:0, reach:0, clicks:0, cpc:0, leads:0, cpl:0 };
+ animateNumber('m-spend', parseFloat(last.spend) || 0, 1);
+ animateNumber('m-reach', last.reach || 0, 0);
+ animateNumber('m-clicks', last.clicks || 0, 0);
+ animateNumber('m-cpc', parseFloat(last.cpc) || 0, 2);
+ animateNumber('m-leads', last.leads || 0, 0);
  animateNumber('m-cpl', parseFloat(last.cpl) || 0, 2);
 
- // Daily reports
- document.getElementById('daily-reports').innerHTML = days.reverse().map(day => {
- const status = parseFloat(day.cpl) < (d.cpa * 1.2) ?
+ document.getElementById('daily-reports').innerHTML =
+ (real ? '<div style="font-size:12px;color:var(--success);margin-bottom:12px">✅ Facebook\'dan real ma\'lumot (oxirgi 7 kun)</div>' : '') +
+ days.slice().reverse().map(function(day){
+ var status = parseFloat(day.cpl) < (d.cpa * 1.2) ?
  '<span class="badge badge-success"><span class="dot"></span>Yaxshi</span>' :
  parseFloat(day.cpl) < (d.cpa * 1.8) ?
  '<span class="badge badge-warning"><span class="dot"></span>O\'rta</span>' :
  '<span class="badge badge-danger"><span class="dot"></span>Yomon</span>';
-
- return `
- <div class="report-day">
- <div class="report-date">${day.date}</div>
- <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
- <div class="report-title">Kunlik natija</div>
- ${status}
- </div>
- <div class="metrics-grid" style="grid-template-columns:repeat(6,1fr)">
- <div class="metric-card"><div class="metric-value" style="font-size:16px">$${day.spend}</div><div class="metric-label">Xarajat</div></div>
- <div class="metric-card"><div class="metric-value" style="font-size:16px">${(day.reach/1000).toFixed(1)}K</div><div class="metric-label">Reach</div></div>
- <div class="metric-card"><div class="metric-value" style="font-size:16px">${day.clicks}</div><div class="metric-label">Klik</div></div>
- <div class="metric-card"><div class="metric-value" style="font-size:16px">$${day.cpc}</div><div class="metric-label">CPC</div></div>
- <div class="metric-card"><div class="metric-value" style="font-size:16px;color:var(--success)">${day.leads}</div><div class="metric-label">Lead</div></div>
- <div class="metric-card"><div class="metric-value" style="font-size:16px;color:var(--accent)">$${day.cpl}</div><div class="metric-label">CPL</div></div>
- </div>
- <div style="margin-top:10px;font-size:13px;color:var(--text2);background:rgba(108,60,225,0.08);padding:10px;border-radius:8px">
- 🤖 <strong style="color:var(--primary-light)">AI:</strong> ${getAIComment(day, d)}
- </div>
- </div>
- `;
+ return '<div class="report-day"><div class="report-date">' + day.date + '</div>' +
+ '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div class="report-title">Kunlik natija</div>' + status + '</div>' +
+ '<div class="metrics-grid" style="grid-template-columns:repeat(6,1fr)">' +
+ '<div class="metric-card"><div class="metric-value" style="font-size:16px">$' + day.spend + '</div><div class="metric-label">Xarajat</div></div>' +
+ '<div class="metric-card"><div class="metric-value" style="font-size:16px">' + (day.reach/1000).toFixed(1) + 'K</div><div class="metric-label">Reach</div></div>' +
+ '<div class="metric-card"><div class="metric-value" style="font-size:16px">' + day.clicks + '</div><div class="metric-label">Klik</div></div>' +
+ '<div class="metric-card"><div class="metric-value" style="font-size:16px">$' + day.cpc + '</div><div class="metric-label">CPC</div></div>' +
+ '<div class="metric-card"><div class="metric-value" style="font-size:16px;color:var(--success)">' + day.leads + '</div><div class="metric-label">Lead</div></div>' +
+ '<div class="metric-card"><div class="metric-value" style="font-size:16px;color:var(--accent)">$' + day.cpl + '</div><div class="metric-label">CPL</div></div>' +
+ '</div>' +
+ '<div style="margin-top:10px;font-size:13px;color:var(--text2);background:rgba(108,60,225,0.08);padding:10px;border-radius:8px">🤖 <strong style="color:var(--primary-light)">AI:</strong> ' + getAIComment(day, d) + '</div>' +
+ '</div>';
  }).join('');
 }
 
