@@ -132,7 +132,7 @@ KPI yashil: CTR>1.5%, CPC<$1.5, CPM<$3, Frequency<2.5. Meta policy buzilmasin. O
 function activeProvider() { if (ANTHROPIC_API_KEY) return 'anthropic'; if (OPENAI_API_KEY) return 'openai'; return null; }
 async function callAnthropic(p, mt=1200) {
   const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'content-type':'application/json','x-api-key':ANTHROPIC_API_KEY,'anthropic-version':'2023-06-01'}, body: JSON.stringify({ model:ANTHROPIC_MODEL, max_tokens:mt, system:SYSTEM_PROMPT, messages:[{role:'user',content:p}] }) });
-  if (!r.ok) throw new Error('Anthropic '+r.status); const d=await r.json(); return (d.content||[]).map(c=>c.text).join('').trim();
+  if (!r.ok) { const t=await r.text().catch(()=>''); throw new Error('Anthropic '+r.status+' '+t.slice(0,300)); } const d=await r.json(); return (d.content||[]).map(c=>c.text).join('').trim();
 }
 async function callOpenAI(p, mt=1200) {
   const r = await fetch('https://api.openai.com/v1/chat/completions', { method:'POST', headers:{'content-type':'application/json',authorization:`Bearer ${OPENAI_API_KEY}`}, body: JSON.stringify({ model:OPENAI_MODEL, max_tokens:mt, messages:[{role:'system',content:SYSTEM_PROMPT},{role:'user',content:p}] }) });
@@ -293,7 +293,7 @@ ai.post('/analyze', async (req, res) => {
   const d = req.body || {};
   if (!d.nisha && !d.offer) return res.status(400).json({ error: 'nisha yoki offer kerak' });
   try { const { text, provider } = await runLLM(analysisPrompt(d), 1300); return res.json(text ? { source: provider, text } : { source: 'template', text: templateAnalysis(d) }); }
-  catch (e) { return res.json({ source: 'template', text: templateAnalysis(d), warning: 'LLM xatosi' }); }
+  catch (e) { console.error('[ai/analyze]', e.message || e); return res.json({ source: 'template', text: templateAnalysis(d), warning: 'LLM xatosi', debug: String(e.message || e) }); }
 });
 ai.post('/optimize', async (req, res) => {
   const { biz = {}, reports = [] } = req.body || {};
