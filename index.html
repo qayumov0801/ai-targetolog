@@ -696,34 +696,46 @@ function showEmailForm() {
   showToast('Ism, email va parol kiriting 👇');
 }
 
-function authGoogle() {
-  // Client ID sozlangan bo'lsa — haqiqiy Google oynasi
-  if (GOOGLE_CLIENT_ID && typeof google !== 'undefined' && google.accounts) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: async function(response) {
-        try {
-          var payload = JSON.parse(atob(response.credential.split('.')[1]));
-          var data = await apiCall('POST', '/auth/google', {
-            googleId: payload.sub, name: payload.name,
-            email: payload.email, avatar: payload.picture
-          }, false);
-          saveSession(data.token, data.user);
-          document.getElementById('auth-screen').classList.add('hidden');
-          document.getElementById('onboard-screen').classList.remove('hidden');
-          showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
-        } catch(e) { showToast(e.message, 'warning'); }
-      }
-    });
-    google.accounts.id.prompt(function(n){
-      // One Tap ko'rsatilmasa — email formaga o'tamiz
-      if (n.isNotDisplayed() || n.isSkippedMoment()) showEmailForm();
-    });
-  } else {
-    // Client ID hali yo'q — email + parol bilan ro'yxatdan o'tishga yo'naltiramiz
-    showEmailForm();
+// Google credential (ID token) qaytganda
+async function handleGoogleCredential(response) {
+  try {
+    var payload = JSON.parse(atob(response.credential.split('.')[1]));
+    var data = await apiCall('POST', '/auth/google', {
+      googleId: payload.sub, name: payload.name,
+      email: payload.email, avatar: payload.picture
+    }, false);
+    saveSession(data.token, data.user);
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('onboard-screen').classList.remove('hidden');
+    showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
+  } catch(e) { showToast(e.message, 'warning'); }
+}
+
+// Google'ning rasmiy tugmasini chizamiz (ishonchli, FedCM bilan ishlaydi)
+function initGoogleBtn() {
+  if (!GOOGLE_CLIENT_ID || typeof google === 'undefined' || !google.accounts) {
+    return setTimeout(initGoogleBtn, 300);
+  }
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+  var custom = document.querySelector('.auth-btn-google');
+  var holder = document.getElementById('g_id_signin');
+  if (!holder && custom) {
+    holder = document.createElement('div');
+    holder.id = 'g_id_signin';
+    holder.style.cssText = 'display:flex;justify-content:center;margin-bottom:10px';
+    custom.parentNode.insertBefore(holder, custom);
+    custom.style.display = 'none';
+  }
+  if (holder) {
+    try {
+      google.accounts.id.renderButton(holder, { theme:'filled_blue', size:'large', width:320, text:'signin_with', shape:'pill', logo_alignment:'left' });
+    } catch(e) { if (custom) custom.style.display = ''; }
   }
 }
+initGoogleBtn();
+
+// Eski tugma bosilsa ham — rasmiy Google tugmasi yo'q bo'lsa email formaga
+function authGoogle() { showEmailForm(); }
 
 function showPhoneForm() {
   var pf = document.getElementById('phone-form');
