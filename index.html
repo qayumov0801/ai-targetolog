@@ -8,6 +8,7 @@
 </head>
 <body>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <div class="auth-screen" id="auth-screen">
  <div class="auth-box">
  <div class="auth-logo">🎯</div>
@@ -51,6 +52,7 @@
   </button>
  </div>
 
+ <div class="auth-skip" onclick="showEmailForm()" style="color:var(--text2)">✉️ Email bilan ro'yxatdan o'tish</div>
  <div class="auth-skip" onclick="skipAuth()">Hozircha o'tkazib yuborish →</div>
  </div>
 </div>
@@ -683,15 +685,24 @@ function showMainApp() {
   }
 }
 
-// Google OAuth
+// Google OAuth — haqiqiy Client ID shu yerga qo'yiladi (maxfiy emas, ommaviy)
+var GOOGLE_CLIENT_ID = '';
+
+function showEmailForm() {
+  document.getElementById('email-form').classList.remove('hidden');
+  document.getElementById('phone-form').classList.remove('show');
+  var n = document.getElementById('email-name-input');
+  if (n) n.focus();
+  showToast('Ism, email va parol kiriting 👇');
+}
+
 function authGoogle() {
-  // Google OAuth SDK orqali (GSI — Google Sign In)
-  if (typeof google !== 'undefined' && google.accounts) {
+  // Client ID sozlangan bo'lsa — haqiqiy Google oynasi
+  if (GOOGLE_CLIENT_ID && typeof google !== 'undefined' && google.accounts) {
     google.accounts.id.initialize({
-      client_id: '{{GOOGLE_CLIENT_ID}}',
+      client_id: GOOGLE_CLIENT_ID,
       callback: async function(response) {
         try {
-          // JWT decode (base64)
           var payload = JSON.parse(atob(response.credential.split('.')[1]));
           var data = await apiCall('POST', '/auth/google', {
             googleId: payload.sub, name: payload.name,
@@ -700,17 +711,17 @@ function authGoogle() {
           saveSession(data.token, data.user);
           document.getElementById('auth-screen').classList.add('hidden');
           document.getElementById('onboard-screen').classList.remove('hidden');
+          showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
         } catch(e) { showToast(e.message, 'warning'); }
       }
     });
-    google.accounts.id.prompt();
+    google.accounts.id.prompt(function(n){
+      // One Tap ko'rsatilmasa — email formaga o'tamiz
+      if (n.isNotDisplayed() || n.isSkippedMoment()) showEmailForm();
+    });
   } else {
-    // Google OAuth hali sozlanmagan — email + parol bilan ro'yxatdan o'tishga yo'naltiramiz
-    document.getElementById('email-form').classList.remove('hidden');
-    document.getElementById('phone-form').classList.remove('show');
-    var n = document.getElementById('email-name-input');
-    if (n) n.focus();
-    showToast('Email va parol bilan ro\'yxatdan o\'ting 👇');
+    // Client ID hali yo'q — email + parol bilan ro'yxatdan o'tishga yo'naltiramiz
+    showEmailForm();
   }
 }
 
