@@ -82,7 +82,7 @@
  <div style="font-size:12px;color:var(--text3);background:rgba(16,185,129,0.08);border-radius:8px;padding:9px 12px;margin-bottom:18px">🔒 Ma'lumotlaringiz xavfsiz saqlanadi va faqat sizning hisobingizda ko'rinadi.</div>
 
  <!-- ===== FACEBOOK BILAN ULASH (avtomatik) ===== -->
- <div id="fb-connect-block" style="display:none;margin-bottom:18px">
+ <div id="fb-connect-block" style="display:block;margin-bottom:18px">
  <button onclick="fbConnect()" id="fb-connect-btn" style="width:100%;padding:14px;background:#1877F2;
  border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer;
  display:flex;align-items:center;justify-content:center;gap:10px">
@@ -98,63 +98,16 @@
  <button onclick="fbSelectAccount()" style="width:100%;margin-top:10px;padding:12px;background:var(--success);border:none;border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer">✅ Shu akkauntni ulash va boshlash</button>
  </div>
 
- <div class="auth-divider" style="margin:16px 0">yoki qo'lda kiriting</div>
  </div>
-
- <div style="margin-bottom:14px">
- <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Ad Account ID <span style="color:var(--text3)">(ixtiyoriy)</span></label>
- <input id="acc-id" type="text" placeholder="act_123456789012345"
- style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
- border-radius:10px;color:var(--white);font-size:14px;outline:none;font-family:monospace">
- <div style="font-size:11px;color:var(--text3);margin-top:5px">
- 📍 Ads Manager → Akkaunt nomi ustiga bosing → ID ko'rinadi
- </div>
- </div>
-
- <div style="margin-bottom:14px">
- <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Business Manager ID <span style="color:var(--text3)">(ixtiyoriy)</span></label>
- <input id="bm-id" type="text" placeholder="123456789012345"
- style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
- border-radius:10px;color:var(--white);font-size:14px;outline:none;font-family:monospace">
- <div style="font-size:11px;color:var(--text3);margin-top:5px">
- 📍 business.facebook.com → Settings → Business Info → ID
- </div>
- </div>
-
- <div style="margin-bottom:20px">
- <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px">Facebook Sahifa nomi</label>
- <input id="page-name" type="text" placeholder="Masalan: Silk Road Boutique"
- style="width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);
- border-radius:10px;color:var(--white);font-size:14px;outline:none">
- </div>
-
- <details style="margin-bottom:18px;background:rgba(108,60,225,0.08);border-radius:8px;padding:12px">
- <summary style="font-size:13px;color:var(--primary-light);cursor:pointer;font-weight:700">
- ❓ Ad Account ID ni qayerdan topaman?
- </summary>
- <div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.7">
- <strong style="color:var(--white)">1-usul (eng tez):</strong><br>
- ads.facebook.com → Sahifa yuklananda URL da ko'rinadi:<br>
- <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:11px">act_<strong>123456789</strong></code><br><br>
- <strong style="color:var(--white)">2-usul:</strong><br>
- Ads Manager → Sozlamalar (⚙️) → Akkaunt sozlamalari → Akkaunt ID
- </div>
- </details>
 
  <button onclick="skipAccess()" style="width:100%;padding:14px;background:var(--primary);
  border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px">
  O'tkazib yuborish va boshlash →
  </button>
- <div style="display:flex;gap:10px">
- <button onclick="backToOnboard()" style="flex:0 0 auto;padding:11px 16px;background:transparent;
+ <button onclick="backToOnboard()" style="width:100%;padding:11px;background:transparent;
  border:1px solid var(--border);border-radius:10px;color:var(--text3);cursor:pointer;font-size:13px">
  ← Orqaga
  </button>
- <button onclick="saveAccessAndContinue()" style="flex:1;padding:11px;background:transparent;
- border:1px solid var(--border);border-radius:10px;color:var(--text2);font-size:13px;cursor:pointer">
- Ma'lumotni saqlab davom etish
- </button>
- </div>
  </div>
 </div>
 
