@@ -696,46 +696,43 @@ function showEmailForm() {
   showToast('Ism, email va parol kiriting 👇');
 }
 
-// Google credential (ID token) qaytganda
-async function handleGoogleCredential(response) {
-  try {
-    var payload = JSON.parse(atob(response.credential.split('.')[1]));
-    var data = await apiCall('POST', '/auth/google', {
-      googleId: payload.sub, name: payload.name,
-      email: payload.email, avatar: payload.picture
-    }, false);
-    saveSession(data.token, data.user);
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('onboard-screen').classList.remove('hidden');
-    showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
-  } catch(e) { showToast(e.message, 'warning'); }
+// OAuth token oqimi — bosilganda doim popup ochadi (FedCM'ga bog'liq emas)
+var googleTokenClient = null;
+function initGoogle() {
+  if (!GOOGLE_CLIENT_ID || typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+    return setTimeout(initGoogle, 300);
+  }
+  googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'openid email profile',
+    callback: async function(resp) {
+      if (!resp || resp.error || !resp.access_token) {
+        showToast('Google kirish bekor qilindi', 'warning'); return;
+      }
+      try {
+        var info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: 'Bearer ' + resp.access_token }
+        }).then(function(r){ return r.json(); });
+        if (!info || !info.email) { showToast('Google ma\'lumotlari olinmadi', 'warning'); return; }
+        var data = await apiCall('POST', '/auth/google', {
+          googleId: info.sub, name: info.name || info.email,
+          email: info.email, avatar: info.picture
+        }, false);
+        saveSession(data.token, data.user);
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('onboard-screen').classList.remove('hidden');
+        showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
+      } catch(e) { showToast(e.message, 'warning'); }
+    }
+  });
 }
+initGoogle();
 
-// Google'ning rasmiy tugmasini chizamiz (ishonchli, FedCM bilan ishlaydi)
-function initGoogleBtn() {
-  if (!GOOGLE_CLIENT_ID || typeof google === 'undefined' || !google.accounts) {
-    return setTimeout(initGoogleBtn, 300);
-  }
-  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
-  var custom = document.querySelector('.auth-btn-google');
-  var holder = document.getElementById('g_id_signin');
-  if (!holder && custom) {
-    holder = document.createElement('div');
-    holder.id = 'g_id_signin';
-    holder.style.cssText = 'display:flex;justify-content:center;margin-bottom:10px';
-    custom.parentNode.insertBefore(holder, custom);
-    custom.style.display = 'none';
-  }
-  if (holder) {
-    try {
-      google.accounts.id.renderButton(holder, { theme:'filled_blue', size:'large', width:320, text:'signin_with', shape:'pill', logo_alignment:'left' });
-    } catch(e) { if (custom) custom.style.display = ''; }
-  }
+// "Gmail bilan kirish" tugmasi bosilganda
+function authGoogle() {
+  if (googleTokenClient) { googleTokenClient.requestAccessToken(); }
+  else { showToast('Google hali yuklanmoqda, bir lahza...', 'warning'); setTimeout(initGoogle, 300); }
 }
-initGoogleBtn();
-
-// Eski tugma bosilsa ham — rasmiy Google tugmasi yo'q bo'lsa email formaga
-function authGoogle() { showEmailForm(); }
 
 function showPhoneForm() {
   var pf = document.getElementById('phone-form');
