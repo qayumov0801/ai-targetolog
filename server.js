@@ -205,28 +205,31 @@ auth.post('/verify-otp', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: 'Server xatosi' }); }
 });
 auth.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name || !email || !password) return res.status(400).json({ error: 'Ism, email va parol kerak' });
+  let { name, email, phone, password } = req.body;
+  email = (email || '').trim() || null;
+  phone = (phone || '').trim() || null;
+  if (!name || (!email && !phone) || !password) return res.status(400).json({ error: 'Ism, email yoki telefon, va parol kerak' });
   if (password.length < 6) return res.status(400).json({ error: 'Parol kamida 6 ta belgi' });
   try {
-    if (await one('SELECT id FROM users WHERE email=$1', [email])) return res.status(400).json({ error: 'Bu email allaqachon ro\'yxatdan o\'tgan' });
+    if (await one('SELECT id FROM users WHERE (email IS NOT NULL AND email=$1) OR (phone IS NOT NULL AND phone=$2)', [email, phone]))
+      return res.status(400).json({ error: 'Bu email yoki telefon allaqachon ro\'yxatdan o\'tgan' });
     const hash = await bcrypt.hash(password, 10);
-    const u = await one('INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id,name,email,role', [name, email, hash, roleFor(email)]);
+    const u = await one('INSERT INTO users (name,email,phone,password_hash,role) VALUES ($1,$2,$3,$4,$5) RETURNING id,name,email,phone,role', [name, email, phone, hash, roleFor(email)]);
     res.json({ token: signToken(u.id), user: u });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Server xatosi' }); }
 });
 auth.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email va parol kerak' });
+  const { email, phone, login, password } = req.body;
+  const ident = (login || email || phone || '').trim();
+  if (!ident || !password) return res.status(400).json({ error: 'Email/telefon va parol kerak' });
   try {
-    const u = await one('SELECT * FROM users WHERE email=$1', [email]);
-    if (!u || !u.password_hash) return res.status(401).json({ error: "Email yoki parol noto'g'ri" });
-    if (!(await bcrypt.compare(password, u.password_hash))) return res.status(401).json({ error: "Email yoki parol noto'g'ri" });
-    // admin emailini har kirishda rolini yangilaymiz
-    const role = roleFor(email);
+    const u = await one('SELECT * FROM users WHERE (email IS NOT NULL AND email=$1) OR (phone IS NOT NULL AND phone=$1)', [ident]);
+    if (!u || !u.password_hash) return res.status(401).json({ error: "Login yoki parol noto'g'ri" });
+    if (!(await bcrypt.compare(password, u.password_hash))) return res.status(401).json({ error: "Login yoki parol noto'g'ri" });
+    const role = roleFor(u.email);
     if (role !== u.role) await q('UPDATE users SET role=$1 WHERE id=$2', [role, u.id]);
     await q('UPDATE users SET last_login=now() WHERE id=$1', [u.id]);
-    res.json({ token: signToken(u.id), user: { id:u.id, name:u.name, email:u.email, role } });
+    res.json({ token: signToken(u.id), user: { id:u.id, name:u.name, email:u.email, phone:u.phone, role } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Server xatosi' }); }
 });
 auth.get('/me', requireAuth, (req, res) => res.json({ user: req.user }));
