@@ -438,11 +438,13 @@
 
  <div class="divider"></div>
  <div class="card-title" style="margin-bottom:12px">📁 Creative yuklash</div>
- <div style="background:var(--bg3);border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer" onclick="showToast('Hozircha demo mode — fayl yuklash keyinroq qo\'shiladi')">
+ <input type="file" id="creative-file" accept="image/*,video/mp4,video/quicktime" style="display:none" onchange="handleCreativeSelect(event)">
+ <div style="background:var(--bg3);border:2px dashed var(--border);border-radius:10px;padding:30px;text-align:center;cursor:pointer" onclick="document.getElementById('creative-file').click()">
  <div style="font-size:32px;margin-bottom:8px">📎</div>
  <div class="text-sm">Rasm yoki video creative yuklang</div>
  <div class="text-xs">JPG, PNG, MP4 • Maks 4 GB</div>
  </div>
+ <div id="creative-preview" style="margin-top:12px"></div>
 
  <div class="divider"></div>
  <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:16px;margin-bottom:20px">
@@ -1757,6 +1759,27 @@ function closeFeedback(){document.getElementById("feedback-modal").classList.rem
 function toggleTag(el){el.classList.toggle("selected");}
 function submitFeedback(){closeFeedback();showToast("Feedback yuborildi!");document.getElementById("feedback-text").value="";document.querySelectorAll(".tag.selected").forEach(function(t){t.classList.remove("selected");});}
 function animateNumber(id,target,decimals){var el=document.getElementById(id);if(!el||!target)return;var start=0,step=target/30;var timer=setInterval(function(){start=Math.min(start+step,target);el.textContent=start.toFixed(decimals);if(start>=target)clearInterval(timer);},50);}
+function handleCreativeSelect(e){
+  var f = e.target.files && e.target.files[0];
+  var box = document.getElementById('creative-preview');
+  if(!box) return;
+  if(!f){ box.innerHTML=''; return; }
+  var sizeMB = (f.size/1024/1024).toFixed(1);
+  var isImg = f.type.indexOf('image')===0;
+  var isVid = f.type.indexOf('video')===0;
+  var url = URL.createObjectURL(f);
+  var media = isImg ? '<img src="'+url+'" style="max-width:100%;max-height:220px;border-radius:8px">'
+    : isVid ? '<video src="'+url+'" controls style="max-width:100%;max-height:220px;border-radius:8px"></video>'
+    : '<div style="font-size:32px">📄</div>';
+  box.innerHTML = '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">'
+    + media
+    + '<div class="text-sm" style="margin-top:8px;word-break:break-all">📎 '+f.name+'</div>'
+    + '<div class="text-xs">'+sizeMB+' MB</div>'
+    + '<div class="text-xs" style="color:var(--accent);margin-top:6px">⚠️ Hozircha faqat ko\'rinish — fayl saqlanmaydi (Meta integratsiyasidan keyin yuklanadi)</div>'
+    + '</div>';
+  try { if (typeof state!=='undefined' && state) state.creativeName = f.name; } catch(_){}
+  showToast('✅ Tanlandi: ' + f.name);
+}
 function showToast(msg,type){type=type||"success";var t=document.getElementById("toast");if(!t)return;t.textContent=msg;t.style.background=type==="warning"?"var(--warning)":"var(--success)";t.classList.add("show");setTimeout(function(){t.classList.remove("show");},3000);}
 function goal2text(g){return g.includes("konversiya")?"konversiya":g.includes("Lead")?"lead":"brend";}
 function raqobat(n){return "<span style='color:var(--warning)'>ORTA</span>";}
