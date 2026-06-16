@@ -1504,17 +1504,6 @@ function generateOptimization() {
  </div>
 
  <div style="margin-bottom:20px">
- <div class="card-title" style="margin-bottom:12px;font-size:14px">⏰ Targetologning Kunlik Faoliyati</div>
- ${kunlikFaoliyat.map(f => `
- <div style="padding:10px 14px;background:var(--bg3);border-radius:8px;margin-bottom:6px;
- display:flex;gap:10px;align-items:flex-start;font-size:13px;
- border-left:3px solid ${f.includes('⚠️') ? 'var(--danger)' : 'var(--primary)'}">
- <span>${f}</span>
- </div>
- `).join('')}
- </div>
-
- <div style="margin-bottom:20px">
  <div class="card-title" style="margin-bottom:12px;font-size:14px">🌡️ Traffik Harorati — Qaysi auditoriyaga nima ko'rsatish</div>
  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
  ${Object.values(TRAFFIC_TEMPERATURE).map(t => `
@@ -1529,24 +1518,6 @@ function generateOptimization() {
  </div>
  </div>
 
- ${[
- { icon: '🦢', title: 'Oqqushlarni kuzating', text: `Hammasidan yaxshi ishlayotgan 1 ta creative toping ("oqqush"). O'sha creative'ni ${d.budget < 300 ? 'budget 30% oshiring' : 'duplikat qilib scale qiling'}. Yomon ishlayotganlarni o'chiring.`, badge: 'Oltin Nisbat', type: 'success' },
- { icon: '🔄', title: 'Creative Fatigue nazorati', text: `Frequency > 3.5 bo'lsa creative charchagan. CPL oshgan bo'lsa — auditoriya yoki creative yangilang. ${d.budget < 300 ? '2 ta' : '4-6 ta'} zaxira creative doim tayyor bo'lsin.`, badge: 'Muhim', type: 'danger' },
- { icon: '📊', title: 'Voronka qayerda uzilgan?', text: `CTR yaxshi, CPL yuqori → Landing page muammo (konversiya past). CTR past → Creative/Audience muammo. Leads kelayapti, sotuv yo'q → Sotuv skripti va jarayon muammo.`, badge: 'Diagnostika', type: 'warning' },
- { icon: '⚖️', title: 'CBO vs ABO tanlash', text: `$${d.budget} budjet bilan: ${d.budget > 400 ? 'CBO yoqing — Meta o\'zi taqsimlaydi' : 'ABO (manual) — har ad set\'ga alohida budjet'}. CBO ishlash uchun kamida 3 ta ad set bo\'lsin.`, badge: d.budget > 400 ? 'CBO tavsiya' : 'ABO tavsiya', type: 'info' }
- ].map(r => `
- <div style="display:flex;gap:12px;padding:16px;background:var(--bg3);border-radius:10px;margin-bottom:12px;
- border-left:3px solid var(--${r.type==='success'?'success':r.type==='warning'?'warning':r.type==='danger'?'danger':'primary-light'})">
- <span style="font-size:24px">${r.icon}</span>
- <div style="flex:1">
- <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
- <span class="font-bold">${r.title}</span>
- <span class="badge badge-${r.type==='success'?'success':r.type==='warning'?'warning':r.type==='danger'?'danger':'info'}">${r.badge}</span>
- </div>
- <div class="text-sm">${r.text}</div>
- </div>
- </div>
- `).join('')}
  `;
 
  // Creative scenarios
