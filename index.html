@@ -644,7 +644,9 @@ function showMainApp() {
 var GOOGLE_CLIENT_ID = '800780624802-fqog2uu7eakumof7i0frme9q0ric12kd.apps.googleusercontent.com';
 
 function showRegisterForm() {
-  document.getElementById('register-form').classList.remove('hidden');
+  var rf = document.getElementById('register-form');
+  rf.classList.remove('hidden');
+  rf.classList.add('show');
   document.getElementById('phone-form').classList.remove('show');
   var n = document.getElementById('reg-name'); if (n) n.focus();
 }
