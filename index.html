@@ -42,19 +42,50 @@
   </div>
  </div>
 
- <!-- AKKAUNT OCHISH: Gmail yoki Telefon + parol -->
+ <!-- AKKAUNT OCHISH: Gmail/Telefon + parol + shartlar + kod tasdiqlash -->
  <div class="auth-phone-form hidden" id="register-form">
-  <div style="display:flex;gap:8px;margin-bottom:12px">
-   <button type="button" id="reg-tab-email" onclick="setRegMethod('email')" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--primary-light);background:var(--primary);color:#fff;font-size:13px;font-weight:700;cursor:pointer">📧 Gmail</button>
-   <button type="button" id="reg-tab-phone" onclick="setRegMethod('phone')" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer">📱 Telefon</button>
+  <!-- 1-qadam: ma'lumot + parol + shartlar -->
+  <div id="reg-step1">
+   <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button type="button" id="reg-tab-email" onclick="setRegMethod('email')" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--primary-light);background:var(--primary);color:#fff;font-size:13px;font-weight:700;cursor:pointer">📧 Gmail</button>
+    <button type="button" id="reg-tab-phone" onclick="setRegMethod('phone')" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer">📱 Telefon</button>
+   </div>
+   <input class="auth-input" type="text" id="reg-name" placeholder="Ismingiz">
+   <input class="auth-input" type="email" id="reg-email" placeholder="Email (Gmail) manzilingiz">
+   <input class="auth-input hidden" type="tel" id="reg-phone" placeholder="+998 90 123 45 67">
+   <input class="auth-input" type="password" id="reg-pass" placeholder="Parol yarating (kamida 6 belgi)">
+   <label style="display:flex;align-items:flex-start;gap:8px;text-align:left;font-size:12px;color:var(--text2);margin:2px 0 14px;cursor:pointer">
+    <input type="checkbox" id="reg-terms" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:var(--primary);cursor:pointer">
+    <span>AI Targetolog <a onclick="showTerms(event)" style="color:var(--primary-light);text-decoration:underline;cursor:pointer">ichki qoidalari va shartlariga</a> roziman</span>
+   </label>
+   <button class="auth-btn auth-btn-phone" onclick="doRegisterRequest()" style="margin-top:0" id="reg-submit-btn">
+    📩 Kod yuborish
+   </button>
   </div>
-  <input class="auth-input" type="text" id="reg-name" placeholder="Ismingiz">
-  <input class="auth-input" type="email" id="reg-email" placeholder="Email (Gmail) manzilingiz">
-  <input class="auth-input hidden" type="tel" id="reg-phone" placeholder="+998 90 123 45 67">
-  <input class="auth-input" type="password" id="reg-pass" placeholder="Parol yarating (kamida 6 belgi)">
-  <button class="auth-btn auth-btn-phone" onclick="doRegister()" style="margin-top:0">
-   ✅ Akkaunt ochish
-  </button>
+  <!-- 2-qadam: kod tasdiqlash -->
+  <div id="reg-step2" class="hidden">
+   <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="reg-code-hint">Emailingizga yuborilgan 6 xonali kodni kiriting</div>
+   <input class="auth-input" type="number" id="reg-code" placeholder="6 xonali kod" style="letter-spacing:6px;font-size:20px;text-align:center">
+   <button class="auth-btn auth-btn-phone" onclick="doRegisterVerify()" style="margin-top:0">
+    ✅ Tasdiqlash va kirish
+   </button>
+   <div class="auth-skip" onclick="regBackToStep1()" style="color:var(--text3)">← Orqaga</div>
+  </div>
+ </div>
+
+ <!-- Shartlar oynasi -->
+ <div id="terms-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto;text-align:left">
+   <div style="font-size:18px;font-weight:800;color:var(--white);margin-bottom:12px">📜 Qoidalar va shartlar</div>
+   <div style="font-size:13px;color:var(--text2);line-height:1.7">
+    <p style="margin-bottom:10px"><b style="color:var(--white)">1. Xizmat haqida.</b> AI Targetolog — Meta (Facebook/Instagram) reklamasi bo'yicha tahlil va tavsiyalar beruvchi yordamchi vositadir. Tavsiyalar ma'lumot xarakterida bo'lib, natija kafolatlanmaydi.</p>
+    <p style="margin-bottom:10px"><b style="color:var(--white)">2. Akkaunt.</b> Siz kiritgan ma'lumotlar (ism, email/telefon) to'g'ri bo'lishi kerak. Parolingiz maxfiyligi uchun o'zingiz javobgarsiz.</p>
+    <p style="margin-bottom:10px"><b style="color:var(--white)">3. Ma'lumotlar.</b> Ma'lumotlaringiz xavfsiz saqlanadi va uchinchi shaxslarga sotilmaydi. Faqat xizmatni yaxshilash uchun ishlatiladi.</p>
+    <p style="margin-bottom:10px"><b style="color:var(--white)">4. Foydalanish.</b> Xizmatdan qonuniy maqsadlarda foydalanasiz; Meta siyosatiga zid reklama yaratmaslik majburiyatini olasiz.</p>
+    <p><b style="color:var(--white)">5. O'zgarishlar.</b> Shartlar vaqti-vaqti bilan yangilanishi mumkin.</p>
+   </div>
+   <button class="auth-btn auth-btn-phone" onclick="closeTerms()" style="margin-top:18px;margin-bottom:0">Tushunarli</button>
+  </div>
  </div>
 
  <div class="auth-skip" onclick="showRegisterForm()" style="color:var(--text2)">✉️ Akkaunt ochish — Email yoki Telefon</div>
@@ -662,32 +693,80 @@ function setRegMethod(m) {
   document.getElementById('reg-phone').classList.toggle('hidden', m!=='phone');
 }
 
-async function doRegister() {
+var regPending = { contact: '', method: 'email' };
+
+async function doRegisterRequest() {
   var name = document.getElementById('reg-name').value.trim();
   var pass = document.getElementById('reg-pass').value;
   var email = regMethod==='email' ? document.getElementById('reg-email').value.trim() : '';
   var phone = regMethod==='phone' ? document.getElementById('reg-phone').value.trim() : '';
+  var terms = document.getElementById('reg-terms').checked;
   if (!name) { showToast('Ismingizni kiriting', 'warning'); return; }
   if (regMethod==='email' && !email) { showToast('Email kiriting', 'warning'); return; }
   if (regMethod==='phone' && (!phone || phone.replace(/\D/g,'').length < 9)) { showToast("To'g'ri telefon raqam kiriting", 'warning'); return; }
   if (!pass || pass.length < 6) { showToast('Parol kamida 6 ta belgi bo\'lsin', 'warning'); return; }
+  if (!terms) { showToast('Avval shartlarga rozilik bering ☑️', 'warning'); return; }
+  var btn = document.getElementById('reg-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Yuborilmoqda...'; }
   try {
-    var body = { name: name, password: pass };
+    var body = { name: name, password: pass, terms: true };
     if (email) body.email = email;
     if (phone) body.phone = phone;
-    var data;
+    var resp;
     try {
-      data = await apiCall('POST', '/auth/register', body, false);
+      resp = await apiCall('POST', '/auth/register-request', body, false);
     } catch(e) {
-      // Allaqachon ro'yxatdan o'tgan bo'lsa — kirishga urinamiz
-      data = await apiCall('POST', '/auth/login', { login: email || phone, password: pass }, false);
+      if (/allaqachon|already/i.test(e.message)) {
+        // Akkaunt mavjud — to'g'ridan-to'g'ri kirishga urinamiz
+        try {
+          var d = await apiCall('POST', '/auth/login', { login: email || phone, password: pass }, false);
+          finishAuth(d); return;
+        } catch(e2) {
+          showToast('Bu akkaunt allaqachon mavjud. Parolni to\'g\'ri kiriting.', 'warning'); return;
+        }
+      }
+      throw e;
     }
-    saveSession(data.token, data.user);
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('onboard-screen').classList.remove('hidden');
-    showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
+    regPending = { contact: email || phone, method: regMethod };
+    document.getElementById('reg-step1').classList.add('hidden');
+    document.getElementById('reg-step2').classList.remove('hidden');
+    document.getElementById('reg-code-hint').textContent = regMethod==='email'
+      ? ('Emailingizga (' + email + ') yuborilgan 6 xonali kodni kiriting')
+      : 'Yuborilgan 6 xonali kodni kiriting';
+    if (resp && resp.dev_code) {
+      document.getElementById('reg-code').value = resp.dev_code;
+      showToast('ℹ️ Demo: kod avtomatik to\'ldirildi (' + resp.dev_code + ')');
+    } else {
+      showToast('📩 Tasdiqlash kodi emailga yuborildi');
+      var ci = document.getElementById('reg-code'); if (ci) ci.focus();
+    }
+  } catch(e) { showToast(e.message, 'warning'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '📩 Kod yuborish'; } }
+}
+
+async function doRegisterVerify() {
+  var code = document.getElementById('reg-code').value.trim();
+  if (!code || code.length < 4) { showToast('6 xonali kodni kiriting', 'warning'); return; }
+  try {
+    var d = await apiCall('POST', '/auth/register-verify', { contact: regPending.contact, code: code }, false);
+    finishAuth(d);
   } catch(e) { showToast(e.message, 'warning'); }
 }
+
+function regBackToStep1() {
+  document.getElementById('reg-step2').classList.add('hidden');
+  document.getElementById('reg-step1').classList.remove('hidden');
+}
+
+function finishAuth(data) {
+  saveSession(data.token, data.user);
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('onboard-screen').classList.remove('hidden');
+  showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
+}
+
+function showTerms(e) { if (e) e.preventDefault(); document.getElementById('terms-overlay').style.display = 'flex'; }
+function closeTerms() { document.getElementById('terms-overlay').style.display = 'none'; }
 
 // OAuth token oqimi — bosilganda doim popup ochadi (FedCM'ga bog'liq emas)
 var googleTokenClient = null;

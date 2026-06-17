@@ -44,10 +44,12 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       contact TEXT NOT NULL,
       code TEXT NOT NULL,
+      payload TEXT,
       expires_at TIMESTAMPTZ NOT NULL,
       used INTEGER DEFAULT 0,
       created_at TIMESTAMPTZ DEFAULT now()
     );
+    ALTER TABLE otp_codes ADD COLUMN IF NOT EXISTS payload TEXT;
     CREATE TABLE IF NOT EXISTS campaigns (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(id),
@@ -120,6 +122,36 @@ async function sendOTP(contact, code) {
 }
 
 // =====================================================================
+// EMAIL (Resend) — tasdiqlash kodi
+// =====================================================================
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const EMAIL_FROM = process.env.EMAIL_FROM || 'AI Targetolog <onboarding@resend.dev>';
+const emailConfigured = !!RESEND_API_KEY;
+async function sendEmailCode(email, code) {
+  if (!RESEND_API_KEY) { console.log(`\n📧 EMAIL CODE [${email}]: ${code} (konsol — Resend sozlanmagan)\n`); return false; }
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: EMAIL_FROM,
+        to: [email],
+        subject: 'AI Targetolog — tasdiqlash kodi: ' + code,
+        html: '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#1E1540;border-radius:16px;color:#E2D9FF">'
+          + '<h2 style="color:#fff;margin:0 0 8px">🎯 AI Targetolog</h2>'
+          + '<p style="color:#9B8EC4;margin:0 0 20px">Ro\'yxatdan o\'tishni yakunlash uchun tasdiqlash kodingiz:</p>'
+          + '<div style="font-size:34px;font-weight:800;letter-spacing:8px;color:#8B5CF6;text-align:center;padding:16px;background:#251848;border-radius:12px">' + code + '</div>'
+          + '<p style="color:#6B5E9C;font-size:13px;margin:20px 0 0">Kod 10 daqiqa amal qiladi. Agar siz so\'ramagan bo\'lsangiz, e\'tiborsiz qoldiring.</p>'
+          + '</div>'
+      })
+    });
+    if (!r.ok) { const t = await r.text(); console.error('[resend]', r.status, t.slice(0,200)); return false; }
+    console.log('[resend] yuborildi → ' + email);
+    return true;
+  } catch (e) { console.error('[resend]', e.message); return false; }
+}
+
+// =====================================================================
 // AI (LLM)
 // =====================================================================
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
@@ -164,7 +196,7 @@ app.use('/api/auth/', rateLimit({ windowMs: 15*60*1000, max: 40, message: { erro
 
 app.get('/api/health', async (req, res) => {
   let db = false; try { await q('SELECT 1'); db = true; } catch (e) {}
-  res.json({ status: 'ok', version: '2.0.0', db, llm: !!activeProvider(), sms: smsConfigured, time: new Date().toISOString() });
+  res.json({ status: 'ok', version: '2.1.0', db, llm: !!activeProvider(), sms: smsConfigured, email: emailConfigured, time: new Date().toISOString() });
 });
 
 // ---------- AUTH ----------
@@ -230,6 +262,45 @@ auth.post('/login', async (req, res) => {
     if (role !== u.role) await q('UPDATE users SET role=$1 WHERE id=$2', [role, u.id]);
     await q('UPDATE users SET last_login=now() WHERE id=$1', [u.id]);
     res.json({ token: signToken(u.id), user: { id:u.id, name:u.name, email:u.email, phone:u.phone, role } });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Server xatosi' }); }
+});
+// Ro'yxatdan o'tish: 1-qadam — kod yuborish (email/telefon + parol + shartlar)
+auth.post('/register-request', async (req, res) => {
+  let { name, email, phone, password, terms } = req.body;
+  email = (email || '').trim().toLowerCase() || null;
+  phone = (phone || '').trim() || null;
+  if (!name || (!email && !phone) || !password) return res.status(400).json({ error: 'Ism, email/telefon va parol kerak' });
+  if (password.length < 6) return res.status(400).json({ error: 'Parol kamida 6 ta belgi' });
+  if (!terms) return res.status(400).json({ error: 'Shartlarga rozilik berishingiz kerak' });
+  const contact = email || phone;
+  try {
+    if (await one('SELECT id FROM users WHERE (email IS NOT NULL AND email=$1) OR (phone IS NOT NULL AND phone=$2)', [email, phone]))
+      return res.status(400).json({ error: 'Bu email yoki telefon allaqachon ro\'yxatdan o\'tgan' });
+    const hash = await bcrypt.hash(password, 10);
+    const code = genOTP();
+    const exp = new Date(Date.now() + 10*60*1000).toISOString();
+    const payload = JSON.stringify({ name, email, phone, password_hash: hash });
+    await q('UPDATE otp_codes SET used=1 WHERE contact=$1 AND used=0', [contact]);
+    await q('INSERT INTO otp_codes (contact,code,payload,expires_at) VALUES ($1,$2,$3,$4)', [contact, code, payload, exp]);
+    let sent = false;
+    if (email) sent = await sendEmailCode(email, code);
+    res.json({ success: true, channel: email ? 'email' : 'phone', sent, dev_code: sent ? undefined : code });
+  } catch (e) { console.error(e); res.status(500).json({ error: 'Server xatosi' }); }
+});
+// Ro'yxatdan o'tish: 2-qadam — kodni tasdiqlash va akkaunt yaratish
+auth.post('/register-verify', async (req, res) => {
+  let { contact, email, phone, code } = req.body;
+  contact = (contact || email || phone || '').trim();
+  if (email || (contact && contact.includes('@'))) contact = contact.toLowerCase();
+  if (!contact || !code) return res.status(400).json({ error: 'Kontakt va kod kerak' });
+  try {
+    const o = await one("SELECT * FROM otp_codes WHERE contact=$1 AND code=$2 AND used=0 AND expires_at>now() AND payload IS NOT NULL ORDER BY id DESC LIMIT 1", [contact, code]);
+    if (!o) return res.status(400).json({ error: "Kod noto'g'ri yoki muddati o'tgan" });
+    const p = JSON.parse(o.payload);
+    let u = await one('SELECT * FROM users WHERE (email IS NOT NULL AND email=$1) OR (phone IS NOT NULL AND phone=$2)', [p.email||null, p.phone||null]);
+    if (!u) u = await one('INSERT INTO users (name,email,phone,password_hash,role) VALUES ($1,$2,$3,$4,$5) RETURNING id,name,email,phone,role', [p.name, p.email||null, p.phone||null, p.password_hash, roleFor(p.email)]);
+    await q('UPDATE otp_codes SET used=1 WHERE id=$1', [o.id]);
+    res.json({ token: signToken(u.id), user: { id:u.id, name:u.name, email:u.email, phone:u.phone, role: u.role || roleFor(p.email) } });
   } catch (e) { console.error(e); res.status(500).json({ error: 'Server xatosi' }); }
 });
 auth.get('/me', requireAuth, (req, res) => res.json({ user: req.user }));
