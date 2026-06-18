@@ -126,29 +126,52 @@ async function sendOTP(contact, code) {
 // =====================================================================
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const EMAIL_FROM = process.env.EMAIL_FROM || 'AI Targetolog <onboarding@resend.dev>';
-const emailConfigured = !!RESEND_API_KEY;
+const GMAIL_USER = (process.env.GMAIL_USER || '').trim();
+const GMAIL_APP_PASSWORD = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''); // app-parol bo'shliqsiz
+const gmailConfigured = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
+const emailConfigured = gmailConfigured || !!RESEND_API_KEY;
+let gmailTransporter = null;
+try {
+  if (gmailConfigured) {
+    const nodemailer = require('nodemailer');
+    gmailTransporter = nodemailer.createTransport({ service: 'gmail', auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } });
+  }
+} catch (e) { console.error('[gmail init]', e.message); }
+
+function codeEmailHtml(code) {
+  return '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#1E1540;border-radius:16px;color:#E2D9FF">'
+    + '<h2 style="color:#fff;margin:0 0 8px">🎯 AI Targetolog</h2>'
+    + '<p style="color:#9B8EC4;margin:0 0 20px">Ro\'yxatdan o\'tishni yakunlash uchun tasdiqlash kodingiz:</p>'
+    + '<div style="font-size:34px;font-weight:800;letter-spacing:8px;color:#8B5CF6;text-align:center;padding:16px;background:#251848;border-radius:12px">' + code + '</div>'
+    + '<p style="color:#6B5E9C;font-size:13px;margin:20px 0 0">Kod 10 daqiqa amal qiladi. Agar siz so\'ramagan bo\'lsangiz, e\'tiborsiz qoldiring.</p>'
+    + '</div>';
+}
+
 async function sendEmailCode(email, code) {
-  if (!RESEND_API_KEY) { console.log(`\n📧 EMAIL CODE [${email}]: ${code} (konsol — Resend sozlanmagan)\n`); return false; }
-  try {
-    const r = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: [email],
-        subject: 'AI Targetolog — tasdiqlash kodi: ' + code,
-        html: '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#1E1540;border-radius:16px;color:#E2D9FF">'
-          + '<h2 style="color:#fff;margin:0 0 8px">🎯 AI Targetolog</h2>'
-          + '<p style="color:#9B8EC4;margin:0 0 20px">Ro\'yxatdan o\'tishni yakunlash uchun tasdiqlash kodingiz:</p>'
-          + '<div style="font-size:34px;font-weight:800;letter-spacing:8px;color:#8B5CF6;text-align:center;padding:16px;background:#251848;border-radius:12px">' + code + '</div>'
-          + '<p style="color:#6B5E9C;font-size:13px;margin:20px 0 0">Kod 10 daqiqa amal qiladi. Agar siz so\'ramagan bo\'lsangiz, e\'tiborsiz qoldiring.</p>'
-          + '</div>'
-      })
-    });
-    if (!r.ok) { const t = await r.text(); console.error('[resend]', r.status, t.slice(0,200)); return false; }
-    console.log('[resend] yuborildi → ' + email);
-    return true;
-  } catch (e) { console.error('[resend]', e.message); return false; }
+  const html = codeEmailHtml(code);
+  const subject = 'AI Targetolog — tasdiqlash kodi: ' + code;
+  // 1) Gmail SMTP — har qanday foydalanuvchiga
+  if (gmailTransporter) {
+    try {
+      await gmailTransporter.sendMail({ from: 'AI Targetolog <' + GMAIL_USER + '>', to: email, subject, html });
+      console.log('[gmail] yuborildi → ' + email);
+      return true;
+    } catch (e) { console.error('[gmail]', e.message); }
+  }
+  // 2) Resend (zaxira)
+  if (RESEND_API_KEY) {
+    try {
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: EMAIL_FROM, to: [email], subject, html })
+      });
+      if (r.ok) { console.log('[resend] yuborildi → ' + email); return true; }
+      const t = await r.text(); console.error('[resend]', r.status, t.slice(0,200));
+    } catch (e) { console.error('[resend]', e.message); }
+  }
+  console.log(`\n📧 EMAIL CODE [${email}]: ${code} (konsol — email sozlanmagan)\n`);
+  return false;
 }
 
 // =====================================================================
