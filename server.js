@@ -129,12 +129,15 @@ const EMAIL_FROM = process.env.EMAIL_FROM || 'AI Targetolog <onboarding@resend.d
 const GMAIL_USER = (process.env.GMAIL_USER || '').trim();
 const GMAIL_APP_PASSWORD = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, ''); // app-parol bo'shliqsiz
 const gmailConfigured = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
-const emailConfigured = gmailConfigured || !!RESEND_API_KEY;
+const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
+const BREVO_SENDER = (process.env.BREVO_SENDER || GMAIL_USER || '').trim();
+const brevoConfigured = !!(BREVO_API_KEY && BREVO_SENDER);
+const emailConfigured = brevoConfigured || gmailConfigured || !!RESEND_API_KEY;
 let gmailTransporter = null;
 try {
   if (gmailConfigured) {
     const nodemailer = require('nodemailer');
-    gmailTransporter = nodemailer.createTransport({ service: 'gmail', auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } });
+    gmailTransporter = nodemailer.createTransport({ service: 'gmail', auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD }, connectionTimeout: 6000, greetingTimeout: 6000, socketTimeout: 8000 });
   }
 } catch (e) { console.error('[gmail init]', e.message); }
 
@@ -150,15 +153,19 @@ function codeEmailHtml(code) {
 async function sendEmailCode(email, code) {
   const html = codeEmailHtml(code);
   const subject = 'AI Targetolog — tasdiqlash kodi: ' + code;
-  // 1) Gmail SMTP — har qanday foydalanuvchiga
-  if (gmailTransporter) {
+  // 0) Brevo (HTTP — bepul, domensiz, har kimga; Render'da ishlaydi)
+  if (brevoConfigured) {
     try {
-      await gmailTransporter.sendMail({ from: 'AI Targetolog <' + GMAIL_USER + '>', to: email, subject, html });
-      console.log('[gmail] yuborildi → ' + email);
-      return true;
-    } catch (e) { console.error('[gmail]', e.message); }
+      const r = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': BREVO_API_KEY, 'content-type': 'application/json', 'accept': 'application/json' },
+        body: JSON.stringify({ sender: { name: 'AI Targetolog', email: BREVO_SENDER }, to: [{ email }], subject, htmlContent: html })
+      });
+      if (r.ok) { console.log('[brevo] yuborildi → ' + email); return true; }
+      const t = await r.text(); console.error('[brevo]', r.status, t.slice(0,200));
+    } catch (e) { console.error('[brevo]', e.message); }
   }
-  // 2) Resend (zaxira)
+  // 1) Resend (HTTP — tez, Render'da ishonchli)
   if (RESEND_API_KEY) {
     try {
       const r = await fetch('https://api.resend.com/emails', {
@@ -169,6 +176,14 @@ async function sendEmailCode(email, code) {
       if (r.ok) { console.log('[resend] yuborildi → ' + email); return true; }
       const t = await r.text(); console.error('[resend]', r.status, t.slice(0,200));
     } catch (e) { console.error('[resend]', e.message); }
+  }
+  // 2) Gmail SMTP (zaxira — Render SMTP'ni bloklasa ishlamaydi)
+  if (gmailTransporter) {
+    try {
+      await gmailTransporter.sendMail({ from: 'AI Targetolog <' + GMAIL_USER + '>', to: email, subject, html });
+      console.log('[gmail] yuborildi → ' + email);
+      return true;
+    } catch (e) { console.error('[gmail]', e.message); }
   }
   console.log(`\n📧 EMAIL CODE [${email}]: ${code} (konsol — email sozlanmagan)\n`);
   return false;
