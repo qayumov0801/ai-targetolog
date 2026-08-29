@@ -937,6 +937,10 @@ function fbConnect() {
   FB.login(function(resp) {
     if (resp && resp.authResponse) {
       state.fbToken = resp.authResponse.accessToken;
+      // Sahifalarni (Page) ham olib qo'yamiz — real kampaniya uchun kerak
+      FB.api('/me/accounts', { fields: 'name,id,access_token' }, function(pr) {
+        state.fbPages = (pr && pr.data && pr.data.length) ? pr.data : [];
+      });
       FB.api('/me/adaccounts', { fields: 'name,account_id,business{name,id}' }, function(r) {
         var sel = document.getElementById('fb-acc-select');
         sel.innerHTML = '';
@@ -962,7 +966,7 @@ function fbConnect() {
       if (btn) btn.textContent = '📘 Facebook bilan ulash';
       showToast('Ulanish bekor qilindi', 'warning');
     }
-  }, { scope: 'ads_read,business_management' });
+  }, { scope: 'ads_read,ads_management,business_management,pages_show_list' });
 }
 
 async function fbSelectAccount() {
@@ -972,7 +976,10 @@ async function fbSelectAccount() {
   var accId = 'act_' + opt.value;
   var bmId = opt.getAttribute('data-bm') || '';
   var pageName = opt.getAttribute('data-name') || '';
-  state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName };
+  var pages = state.fbPages || [];
+  var pageId = pages.length ? pages[0].id : '';
+  if (pages.length) pageName = pages[0].name || pageName;
+  state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName, pageId: pageId };
   var tk = localStorage.getItem(TOKEN_KEY);
   if (tk) { try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId, bm_id: bmId, page_name: pageName }); } catch(e) {} }
   if (document.getElementById('biz-name')) document.getElementById('biz-name').value = pageName;
@@ -1493,7 +1500,6 @@ function generateAnalysis() {
 async function launchCampaign() {
  state.campaignActive = true;
  document.getElementById('tab-3').classList.add('completed');
- showToast('✅ Kampaniya yoqildi! Kunlik hisobotlar boshlandi');
 
  // Kampaniyani backendga saqlaymiz (kirgan bo'lsa) — admin panelda ko'rinadi
  var d = state.bizData || {};
@@ -1506,6 +1512,39 @@ async function launchCampaign() {
  });
  if (c && c.campaign) state.campaignId = c.campaign.id;
  } catch(e) { console.warn('Kampaniya saqlanmadi:', e.message); }
+ }
+
+ // REAL Facebook kampaniyasi — faqat FB to'liq ulangan bo'lsa (PAUSED holatda yaratiladi)
+ var acc = state.fbAccess;
+ var canReal = !!(state.fbToken && acc && acc.accId && acc.pageId && localStorage.getItem(TOKEN_KEY));
+ if (canReal) {
+ showToast('⏳ Facebook\'da real kampaniya yaratilmoqda...');
+ try {
+ var res = await apiCall('POST', '/api/meta/launch', {
+ fbToken: state.fbToken,
+ adAccountId: acc.accId,
+ pageId: acc.pageId,
+ name: (d.bizName || 'AI Targetolog') + ' — ' + (d.nisha || 'test'),
+ dailyBudget: 5,
+ ageMin: 18, ageMax: 55,
+ link: d.offer || 'https://qayumov0801.github.io/ai-targetolog/',
+ message: (d.bizName || '') + (d.goal ? ' — ' + d.goal : '')
+ });
+ state.metaLaunch = res;
+ showToast('✅ Real kampaniya yaratildi (PAUSED) — Ads Manager\'da tekshiring');
+ if (res && res.adsManager) {
+ var box = document.getElementById('daily-reports');
+ if (box) box.insertAdjacentHTML('afterbegin',
+ '<div style="background:rgba(16,185,129,0.1);border:1px solid var(--success);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.7">' +
+ '✅ <b>Facebook\'da real kampaniya yaratildi</b> (holati: <b>PAUSED</b> — hali pul sarflanmaydi).<br>' +
+ 'Kampaniya ID: <code>' + (res.campaignId||'') + '</code><br>' +
+ '<a href="' + res.adsManager + '" target="_blank" style="color:var(--primary-light);font-weight:700">➡️ Ads Manager\'da ochish va yoqish</a></div>');
+ }
+ } catch(e) {
+ showToast('⚠️ Real kampaniya yaratilmadi: ' + e.message, 'warning');
+ }
+ } else {
+ showToast('✅ Kampaniya yoqildi! Kunlik hisobotlar boshlandi');
  }
 
  generateDailyReports();
