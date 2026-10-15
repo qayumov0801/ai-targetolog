@@ -164,16 +164,16 @@
  </div>
 </div>
 
-<div class="onboard-screen hidden" id="analysis-prev-screen">
- <div class="onboard-box" style="max-width:480px;text-align:center">
+<div class="onboard-screen hidden" id="analysis-prev-screen" style="overflow-y:auto;padding:24px 16px">
+ <div class="onboard-box" style="max-width:480px;text-align:center;margin:auto">
 
  <div id="prev-idle-state">
  <div style="font-size:56px;margin-bottom:16px">📊</div>
  <div class="onboard-q" style="font-size:19px;margin-bottom:8px">Avvalgi reklamalarni tahlil qilish</div>
  <div style="font-size:14px;color:var(--text2);margin-bottom:28px;line-height:1.6">
  AI <strong style="color:var(--white)" id="show-acc-id"></strong> akkauntidagi<br>
- oxirgi 30 kunlik kampaniyalarni Supermetrics orqali<br>
- tortib, to'liq tahlil qiladi
+ oxirgi 30 kunlik kampaniyalarni Facebook'dan<br>
+ olib, to'liq tahlil qiladi
  </div>
 
  <div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:24px;text-align:left">
@@ -204,17 +204,24 @@
  <div id="prev-loading-state" style="display:none">
  <div style="font-size:48px;margin-bottom:20px;animation:spin 2s linear infinite;display:inline-block">⚙️</div>
  <div style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:8px">Tahlil qilinyapti...</div>
- <div style="font-size:13px;color:var(--text2);margin-bottom:20px" id="loading-step-text">Supermetrics orqali ma'lumotlar tortilmoqda</div>
+ <div style="font-size:13px;color:var(--text2);margin-bottom:20px" id="loading-step-text">Facebook'dan ma'lumot olinmoqda...</div>
  <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:left">
- <div class="loading-step active" id="ls-1">⏳ Akkaunt ma'lumotlari yuklanmoqda...</div>
+ <div class="loading-step active" id="ls-1">⏳ Facebook'dan 30 kunlik ma'lumot olinmoqda...</div>
  <div class="loading-step" id="ls-2" style="color:var(--text3)">⏳ Kampaniyalar tahlil qilinmoqda...</div>
- <div class="loading-step" id="ls-3" style="color:var(--text3)">⏳ AI feedback tayyorlanmoqda...</div>
+ <div class="loading-step" id="ls-3" style="color:var(--text3)">⏳ Natija tayyorlanmoqda...</div>
  </div>
  <div style="margin-top:20px">
  <button onclick="skipPrevAnalysis()" style="padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer;font-size:13px">
  O'tkazib yuborish
  </button>
  </div>
+ </div>
+
+ <div id="prev-result-state" style="display:none">
+ <div id="prev-result"></div>
+ <button onclick="finishPrevAnalysis()" style="width:100%;margin-top:6px;padding:13px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border:none;border-radius:10px;color:white;font-size:15px;font-weight:700;cursor:pointer">
+ Davom etish →
+ </button>
  </div>
 
  </div>
@@ -663,12 +670,6 @@ function showMainApp() {
   document.getElementById('main-header').style.display = 'flex';
   document.getElementById('main-steps').style.display = 'flex';
   document.getElementById('main-content').style.display = 'block';
-  // User ismini headerda ko'rsat
-  var u = state.currentUser;
-  if (u) {
-    var nameEl = document.getElementById('header-user-name');
-    if (nameEl) nameEl.textContent = u.name || u.email || u.phone;
-  }
 }
 
 // Google OAuth — haqiqiy Client ID shu yerga qo'yiladi (maxfiy emas, ommaviy)
@@ -681,7 +682,6 @@ function showRegisterForm() {
   document.getElementById('phone-form').classList.remove('show');
   var n = document.getElementById('reg-name'); if (n) n.focus();
 }
-function showEmailForm() { showRegisterForm(); } // moslik uchun (Google fallback)
 
 var regMethod = 'email';
 function setRegMethod(m) {
@@ -787,6 +787,7 @@ function initGoogle() {
         }).then(function(r){ return r.json(); });
         if (!info || !info.email) { showToast('Google ma\'lumotlari olinmadi', 'warning'); return; }
         var data = await apiCall('POST', '/auth/google', {
+          accessToken: resp.access_token,
           googleId: info.sub, name: info.name || info.email,
           email: info.email, avatar: info.picture
         }, false);
@@ -808,9 +809,7 @@ function authGoogle() {
 
 function showPhoneForm() {
   var pf = document.getElementById('phone-form');
-  var ef = document.getElementById('email-form');
   pf.classList.toggle('show');
-  if (ef) ef.classList.add('hidden');
   // OTP bosqichi
   document.getElementById('otp-step') && document.getElementById('otp-step').classList.add('hidden');
 }
@@ -864,28 +863,6 @@ async function verifyOTP() {
   } catch(e) { showToast(e.message, 'warning'); }
 }
 
-// Email bilan ro'yxatdan o'tish / kirish
-async function authEmail() {
-  var name = document.getElementById('email-name-input').value.trim();
-  var email = document.getElementById('email-input').value.trim();
-  var pass = document.getElementById('pass-input').value;
-  if (!email || !pass) { showToast("Email va parol kerak", 'warning'); return; }
-  try {
-    var data;
-    try {
-      // Avval login urinib ko'ramiz
-      data = await apiCall('POST', '/auth/login', { email, password: pass }, false);
-    } catch(e) {
-      // Login ishlamasa — register
-      if (!name) { showToast("Ismingizni kiriting", 'warning'); return; }
-      data = await apiCall('POST', '/auth/register', { name, email, password: pass }, false);
-    }
-    saveSession(data.token, data.user);
-    document.getElementById('auth-screen').classList.add('hidden');
-    document.getElementById('onboard-screen').classList.remove('hidden');
-    showToast('✅ Xush kelibsiz, ' + data.user.name + '!');
-  } catch(e) { showToast(e.message, 'warning'); }
-}
 
 function skipAuth() {
   if (loadSession()) {
@@ -984,249 +961,309 @@ async function fbSelectAccount() {
   if (tk) { try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId, bm_id: bmId, page_name: pageName }); } catch(e) {} }
   if (document.getElementById('biz-name')) document.getElementById('biz-name').value = pageName;
   document.getElementById('access-screen').classList.add('hidden');
-  showMainApp();
-  showToast('✅ Facebook ulandi: ' + accId);
+  openPrevAnalysis();
 }
 
-async function saveAccessAndContinue() {
-  var accId = document.getElementById('acc-id').value.trim();
-  if (accId && !accId.startsWith('act_')) accId = 'act_' + accId;
-  var bmId = document.getElementById('bm-id').value.trim();
-  var pageName = document.getElementById('page-name').value.trim();
-  state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName };
 
-  // Hech narsa kiritilmagan bo'lsa — shunchaki o'tkazib yuboramiz
-  if (!accId && !bmId && !pageName) { skipAccess(); return; }
+// ===== AVVALGI REKLAMALAR TAHLILI (Facebook Insights — real 30 kunlik ma'lumot) =====
+// Meta bir xil natijani bir nechta action_type bilan qaytaradi (lead, onsite_conversion.lead_grouped, ...).
+// Hammasini qo'shsak lidlar 2–3 barobar ko'payib ketadi — shuning uchun ustuvorlik bo'yicha BITTASINI olamiz.
+var LEAD_KEYS = ['lead', 'onsite_conversion.lead_grouped', 'leadgen_grouped', 'offsite_conversion.fb_pixel_lead', 'onsite_web_lead', 'complete_registration', 'offsite_conversion.fb_pixel_complete_registration'];
+var PURCHASE_KEYS = ['omni_purchase', 'purchase', 'offsite_conversion.fb_pixel_purchase', 'onsite_web_purchase'];
+var MSG_KEYS = ['onsite_conversion.messaging_conversation_started_7d', 'onsite_conversion.total_messaging_connection'];
+var RESULT_TYPES = { lead: { label: 'Lid', cost: 'CPL' }, purchase: { label: 'Sotuv', cost: 'Sotuv narxi' }, msg: { label: 'Yozishma', cost: 'Yozishma narxi' } };
+var NON_RESULT_OBJECTIVES = /^(OUTCOME_TRAFFIC|OUTCOME_AWARENESS|OUTCOME_APP_PROMOTION|LINK_CLICKS|REACH|BRAND_AWARENESS|VIDEO_VIEWS|POST_ENGAGEMENT|PAGE_LIKES|EVENT_RESPONSES|APP_INSTALLS)$/;
+var ZERO_DEC_CURRENCIES = ['UZS', 'KZT', 'RUB', 'KGS', 'TJS', 'IDR', 'VND', 'KRW', 'JPY', 'HUF', 'CLP', 'COP'];
 
-  // Backend ga saqlash (token bo'lsa)
-  var tk = localStorage.getItem(TOKEN_KEY);
-  if (tk) {
-    try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId || null, bm_id: bmId || null, page_name: pageName || null }); }
-    catch(e) { console.warn('Saqlanmadi:', e.message); }
-  }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function actionsMap(actions) { var m = {}; (actions || []).forEach(function(a) { m[a.action_type] = (m[a.action_type] || 0) + (parseFloat(a.value) || 0); }); return m; }
+function firstOf(m, keys) { for (var i = 0; i < keys.length; i++) if (m[keys[i]]) return m[keys[i]]; return 0; }
+function leadsFromActions(actions) { return firstOf(actionsMap(actions), LEAD_KEYS); }
+function fmtInt(v) { return Math.round(+v || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+function fmtMoney(v, cur) {
+ v = +v || 0;
+ if (ZERO_DEC_CURRENCIES.indexOf(cur) >= 0) return fmtInt(v) + ' ' + cur;
+ return cur === 'USD' ? '$' + v.toFixed(2) : v.toFixed(2) + ' ' + cur;
+}
 
-  if (pageName && document.getElementById('biz-name')) document.getElementById('biz-name').value = pageName;
-  document.getElementById('access-screen').classList.add('hidden');
-  showMainApp();
-  showToast(accId ? '✅ Akkaunt ulandi!' : '✅ Saqlandi!');
+function fbErrorText(e) {
+ var c = +(e && e.code);
+ if (c === 190) return "Facebook sessiyasi tugagan — qaytadan \"Facebook bilan ulash\"ni bosing";
+ if (c === 10 || (c >= 200 && c < 300)) return "Reklama ma'lumotini o'qishga ruxsat berilmagan (ads_read). Facebook'ni qayta ulab, ruxsatni bering";
+ if (c === 4 || c === 17 || c === 32 || c === 613 || (c >= 80000 && c <= 80014)) return "Facebook so'rovlar limiti — 5–10 daqiqadan keyin qayta urinib ko'ring";
+ return 'Facebook xatosi: ' + ((e && e.message) || "noma'lum");
+}
+function fbGet(path, params) {
+ return new Promise(function(resolve, reject) {
+  var finished = false;
+  var timer = setTimeout(function() { if (!finished) { finished = true; reject(new Error("Facebook javob bermadi — internetni tekshirib, qayta urinib ko'ring")); } }, 25000);
+  FB.api(path, Object.assign({ access_token: state.fbToken }, params || {}), function(r) {
+   if (finished) return; finished = true; clearTimeout(timer);
+   if (!r) return reject(new Error('Facebook javob bermadi'));
+   if (r.error) return reject(new Error(fbErrorText(r.error)));
+   resolve(r);
+  });
+ });
+}
+async function fbGetAll(path, params, maxPages) {
+ var rows = [], after = null;
+ for (var p = 0; p < (maxPages || 5); p++) {
+  var r = await fbGet(path, Object.assign({}, params, after ? { after: after } : {}));
+  rows = rows.concat(r.data || []);
+  after = (r.paging && r.paging.next && r.paging.cursors) ? r.paging.cursors.after : null;
+  if (!after) break;
+ }
+ return rows;
+}
+
+// Sof hisob-kitob: Facebook qatorlari → tahlil natijasi (DOM'ga tegmaydi)
+function analyzeAccount(rows, acct, currency) {
+ var T = { spend: 0, impressions: 0, linkClicks: 0, leads: 0, purchases: 0, msgs: 0 };
+ var camps = (rows || []).map(function(r) {
+  var m = actionsMap(r.actions);
+  return { name: r.campaign_name || 'Nomsiz kampaniya', objective: r.objective || '',
+   spend: parseFloat(r.spend) || 0, impressions: parseInt(r.impressions, 10) || 0,
+   frequency: parseFloat(r.frequency) || 0, linkClicks: parseInt(r.inline_link_clicks, 10) || 0,
+   leads: firstOf(m, LEAD_KEYS), purchases: firstOf(m, PURCHASE_KEYS), msgs: firstOf(m, MSG_KEYS), flags: [] };
+ }).filter(function(c) { return c.spend > 0; });
+ camps.forEach(function(c) { T.spend += c.spend; T.impressions += c.impressions; T.linkClicks += c.linkClicks; T.leads += c.leads; T.purchases += c.purchases; T.msgs += c.msgs; });
+
+ var type = T.leads > 0 ? 'lead' : T.purchases > 0 ? 'purchase' : T.msgs > 0 ? 'msg' : 'lead';
+ var key = { lead: 'leads', purchase: 'purchases', msg: 'msgs' }[type];
+ T.results = T[key];
+ T.cpr = T.results > 0 ? T.spend / T.results : null;
+ T.ctr = T.impressions > 0 ? T.linkClicks / T.impressions * 100 : 0;
+ T.cpm = T.impressions > 0 ? T.spend / T.impressions * 1000 : 0;
+ T.reach = acct ? (parseInt(acct.reach, 10) || 0) : 0;
+ T.frequency = acct ? (parseFloat(acct.frequency) || 0) : 0;
+
+ camps.forEach(function(c) {
+  c.results = c[key];
+  c.cpr = c.results > 0 ? c.spend / c.results : null;
+  c.ctr = c.impressions > 0 ? c.linkClicks / c.impressions * 100 : 0;
+  c.cpm = c.impressions > 0 ? c.spend / c.impressions * 1000 : 0;
+  c.share = T.spend > 0 ? c.spend / T.spend : 0;
+  c.convGoal = !NON_RESULT_OBJECTIVES.test(c.objective);
+  if (!c.convGoal) c.flags.push('other');
+ });
+ camps.sort(function(a, b) { return b.spend - a.spend; });
+
+ var ranked = camps.filter(function(c) { return c.convGoal && c.results > 0; }).sort(function(a, b) { return a.cpr - b.cpr; });
+ var robust = ranked.filter(function(c) { return c.results >= 3; });
+ var best = (robust.length ? robust : ranked)[0] || null;
+ var worst = ranked.length > 1 ? ranked[ranked.length - 1] : null;
+ if (worst === best) worst = null;
+ var avg = T.cpr;
+ var waste = camps.filter(function(c) { return c.convGoal && c.results === 0 && c.share >= 0.05 && (avg ? c.spend >= 1.5 * avg : true); });
+ var expensive = ranked.filter(function(c) { return avg && c !== best && c.cpr > 2 * avg && c.share >= 0.1; });
+ var fatigue = camps.filter(function(c) { return c.frequency > 4 && c.share >= 0.1; });
+ var lowCtr = camps.filter(function(c) { return c.impressions >= 1000 && c.ctr < 0.8 && c.share >= 0.1; });
+ if (best) best.flags.push('best');
+ if (worst) worst.flags.push('worst');
+ waste.forEach(function(c) { c.flags.push('waste'); });
+ expensive.forEach(function(c) { c.flags.push('expensive'); });
+ fatigue.forEach(function(c) { c.flags.push('fatigue'); });
+ lowCtr.forEach(function(c) { c.flags.push('lowctr'); });
+ var wasteSpend = waste.reduce(function(s, c) { return s + c.spend; }, 0);
+ var wasteShare = T.spend > 0 ? wasteSpend / T.spend : 0;
+ var hasConv = camps.some(function(c) { return c.convGoal; });
+
+ // Baho (0–100). $ benchmarklari faqat USD akkaunt va lid uchun qo'llanadi.
+ var usdLead = currency === 'USD' && type === 'lead';
+ var score = 0, max = 0;
+ if (usdLead && T.cpr != null) { max += 40; score += T.cpr <= 3 ? 40 : T.cpr <= 8 ? 20 : 5; }
+ else if (hasConv && T.results === 0) { max += 40; }
+ if (T.impressions >= 1000) { max += 25; score += T.ctr >= 1.5 ? 25 : T.ctr >= 0.8 ? 12 : 0; }
+ if (hasConv) { max += 25; score += wasteShare <= 0.05 ? 25 : wasteShare <= 0.2 ? 12 : 0; }
+ max += 10; score += fatigue.length ? 4 : 10;
+ var pct = max > 0 ? Math.round(score / max * 100) : 0;
+ var grade = pct >= 80 ? 'A' : pct >= 60 ? 'B' : pct >= 40 ? 'C' : 'D';
+
+ var R = RESULT_TYPES[type], F = function(v) { return fmtMoney(v, currency); };
+ var wins = [], warnings = [], notes = [];
+ if (usdLead && T.cpr != null && T.cpr <= 3) wins.push('CPL ' + F(T.cpr) + " — O'zbekiston bozori uchun yaxshi (benchmark ≤ $3)");
+ if (T.impressions >= 1000 && T.ctr >= 1.5) wins.push('Link CTR ' + T.ctr.toFixed(2) + '% — kreativlar auditoriyani ushlab turibdi');
+ if (best) wins.push('Eng samarali: «' + esc(best.name) + '» — ' + fmtInt(best.results) + ' ta ' + R.label.toLowerCase() + ', ' + R.cost + ' ' + F(best.cpr));
+ if (hasConv && T.results > 0 && !waste.length) wins.push("Natijasiz katta sarf yo'q — budjet nazoratda");
+ if (usdLead && T.cpr != null && T.cpr > 8) warnings.push('CPL ' + F(T.cpr) + " — juda yuqori (maqsad ≤ $3). Offer yoki lid formani tekshiring");
+ else if (usdLead && T.cpr != null && T.cpr > 3) warnings.push('CPL ' + F(T.cpr) + " — o'rtacha. Maqsad: $3 dan past");
+ if (hasConv && T.results === 0) warnings.push('30 kunda bitta ham natija kelmagan — pixel/lid forma kuzatuvi yoki offerda muammo bor');
+ waste.slice(0, 3).forEach(function(c) { warnings.push('«' + esc(c.name) + '» — ' + F(c.spend) + ' sarflandi, natija 0'); });
+ expensive.slice(0, 2).forEach(function(c) { warnings.push('«' + esc(c.name) + '» — ' + R.cost + ' ' + F(c.cpr) + ", akkaunt o'rtachasidan " + (c.cpr / avg).toFixed(1) + 'x qimmat'); });
+ fatigue.slice(0, 2).forEach(function(c) { warnings.push('«' + esc(c.name) + '» — 30 kunlik chastota ' + c.frequency.toFixed(1) + ': auditoriya charchagan, yangi kreativ kerak'); });
+ lowCtr.slice(0, 2).forEach(function(c) { warnings.push('«' + esc(c.name) + '» — link CTR ' + c.ctr.toFixed(2) + '%: hook (birinchi 3 soniya) kuchsiz'); });
+ if (currency !== 'USD') notes.push('Akkaunt valyutasi ' + esc(currency) + " — $ benchmarklari qo'llanmadi, kampaniyalar o'zaro solishtirildi.");
+ if (camps.some(function(c) { return !c.convGoal; })) notes.push("Maqsadi lid/sotuv bo'lmagan kampaniyalar (trafik, qamrov) reytingga kiritilmadi.");
+
+ return { currency: currency, type: type, totals: T, camps: camps, best: best, worst: worst, waste: waste, wasteSpend: wasteSpend,
+  wasteShare: wasteShare, grade: grade, pct: pct, wins: wins, warnings: warnings, notes: notes };
+}
+
+function openPrevAnalysis() {
+ var scr = document.getElementById('analysis-prev-screen');
+ document.getElementById('show-acc-id').textContent = state.fbAccess ? state.fbAccess.accId : '';
+ document.getElementById('prev-idle-state').style.display = 'block';
+ document.getElementById('prev-loading-state').style.display = 'none';
+ document.getElementById('prev-result-state').style.display = 'none';
+ scr.querySelector('.onboard-box').style.maxWidth = '480px';
+ scr.classList.remove('hidden');
 }
 
 function skipPrevAnalysis() {
+ state.prevRun = (state.prevRun || 0) + 1; // davom etayotgan so'rov natijasini e'tiborsiz qoldiramiz
  document.getElementById('analysis-prev-screen').classList.add('hidden');
  showMainApp();
- showToast('✅ Akkaunt ulandi: ' + (state.fbAccess ? state.fbAccess.accId : ''));
+ showToast('✅ Facebook ulandi: ' + (state.fbAccess ? state.fbAccess.accId : ''));
 }
 
-function startPrevAnalysis() {
- var accId = state.fbAccess ? state.fbAccess.accId : '';
- if (!accId) { skipPrevAnalysis(); return; }
-
- // Loading holatiga o't
- document.getElementById('prev-idle-state').style.display = 'none';
- document.getElementById('prev-loading-state').style.display = 'block';
-
- // Loading steps animatsiyasi
- var steps = ['ls-1', 'ls-2', 'ls-3'];
- var texts = [
- 'Supermetrics orqali ma\'lumotlar tortilmoqda',
- 'Kampaniyalar tahlil qilinmoqda',
- 'AI feedback tayyorlanmoqda'
- ];
- var i = 0;
- var stepTimer = setInterval(function() {
- if (i > 0) {
- document.getElementById(steps[i-1]).classList.remove('active');
- document.getElementById(steps[i-1]).classList.add('done');
- document.getElementById(steps[i-1]).textContent = texts[i-1].replace('⏳ ', '');
- }
- if (i < steps.length) {
- document.getElementById(steps[i]).classList.add('active');
- document.getElementById(steps[i]).classList.remove('');
- document.getElementById('loading-step-text').textContent = texts[i];
- i++;
- } else {
- clearInterval(stepTimer);
- }
- }, 1200);
-
- // sendPrompt orqali Claude ga Supermetrics so'rovi
- var bmId = state.fbAccess.bmId ? ' | BM ID: ' + state.fbAccess.bmId : '';
- var prompt = 'AI Targetolog: ' + accId + bmId + ' Facebook reklama akkauntidagi oxirgi 30 kunlik kampaniyalarni Supermetrics (ds_id="FA") orqali tortib, quyidagilarni tahlil qil va o\'zbek tilida feedback ber:\n' +
- '1. Jami xarajat, reach, CPL, CTR, ROAS\n' +
- '2. Eng yaxshi va eng yomon ishlagan kampaniya/creative\n' +
- '3. Budjet isrof bo\'lgan joylar\n' +
- '4. Qaysi auditoriya eng yaxshi natija bergan\n' +
- '5. 3 ta eng muhim tavsiya\n' +
- 'Natijalarni qisqa, aniq va amaliy qilib ber.';
-
- setTimeout(function() {
- clearInterval(stepTimer);
- // Barcha steplarni done qil
- steps.forEach(function(s, idx) {
- var el = document.getElementById(s);
- el.classList.remove('active');
- el.classList.add('done');
- el.textContent = texts[idx];
- });
-
- // sendPrompt mavjud bo'lsa ishlatamiz
- if (typeof sendPrompt === 'function') {
- sendPrompt(prompt);
- document.getElementById('loading-step-text').textContent = "Tahlil chatda ko'rinadi ↑";
- setTimeout(function() {
+function finishPrevAnalysis() {
+ var a = state.prevAnalysis, b = document.getElementById('budget');
+ if (a && a.currency === 'USD' && b && !b.value && a.totals.spend > 0) b.value = Math.round(a.totals.spend);
  skipPrevAnalysis();
- }, 2000);
- } else {
- // Fallback: clipboard ga copy
- if (navigator.clipboard) {
- navigator.clipboard.writeText(prompt).then(function() {
- document.getElementById('loading-step-text').textContent = "So'rov clipboard ga ko'chirildi — Claude chatga joylashtiring";
- });
- }
- setTimeout(function() { skipPrevAnalysis(); }, 3000);
- }
- }, 4000);
 }
 
-function analyzePrevCampaigns() {
- var spend = parseFloat(document.getElementById('prev-spend').value) || 0;
- var leads = parseFloat(document.getElementById('prev-leads').value) || 0;
- var sales = parseFloat(document.getElementById('prev-sales').value) || 0;
- var ctr = parseFloat(document.getElementById('prev-ctr').value) || 0;
- var reach = parseFloat(document.getElementById('prev-reach').value) || 0;
- var nisha = document.getElementById('prev-nisha').value;
-
- if (!spend && !leads) {
- showToast('Kamida xarajat va lidlar sonini kiriting', 'warning'); return;
- }
-
- // Hisob-kitoblar
- var cpl = leads > 0 ? (spend / leads).toFixed(2) : null;
- var convR = leads > 0 && sales > 0 ? ((sales / leads) * 100).toFixed(1) : null;
- var cpm = reach > 0 ? ((spend / reach) * 1000).toFixed(2) : null;
- var roas = sales > 0 && spend > 0 ? (sales / spend * 10).toFixed(1) : null; // taxminiy
-
- // Benchmark (O'zbekiston uchun)
- var benchCPL = { low: 1, good: 3, high: 8 };
- var benchCTR = { low: 0.8, good: 1.5, high: 3 };
- var benchConv = { low: 2, good: 5, high: 15 };
-
- // Baho tizimi
- var score = 0, maxScore = 0;
- var feedback = [];
- var warnings = [];
- var wins = [];
-
- // CPL tahlili
- if (cpl !== null) {
- maxScore += 30;
- var cplNum = parseFloat(cpl);
- if (cplNum <= benchCPL.good) {
- score += 30;
- wins.push("CPL $" + cpl + " — ajoyib! Benchmark'dan past.");
- } else if (cplNum <= benchCPL.high) {
- score += 15;
- feedback.push("CPL $" + cpl + " — yuqoriroq. Maqsad: $" + benchCPL.good + " dan past. Creative yoki audience o'zgartiring.");
- } else {
- warnings.push("CPL $" + cpl + " — juda yuqori. Landing page yoki offer muammosi bo'lishi mumkin.");
- }
- }
-
- // CTR tahlili
- if (ctr > 0) {
- maxScore += 25;
- if (ctr >= benchCTR.good) {
- score += 25;
- wins.push("CTR " + ctr + "% — yaxshi. Creative auditoriyaga mos kelmoqda.");
- } else if (ctr >= benchCTR.low) {
- score += 12;
- feedback.push("CTR " + ctr + "% — past. Hook (birinchi 3 sek) kuchaytiring. Maqsad: 1.5%+");
- } else {
- warnings.push("CTR " + ctr + "% — juda past. Audience yoki creative to'liq almashtirilishi kerak.");
- }
- }
-
- // Konversiya tahlili
- if (convR !== null) {
- maxScore += 25;
- var convNum = parseFloat(convR);
- if (convNum >= benchConv.good) {
- score += 25;
- wins.push("Lid → Sotuv konversiyasi " + convR + "% — a'lo. Sotuv jarayoni yaxshi ishlayapti.");
- } else if (convNum >= benchConv.low) {
- score += 12;
- feedback.push("Konversiya " + convR + "% — past. Call center skriptini yaxshilang. Follow-up qo'shing.");
- } else {
- warnings.push("Konversiya " + convR + "% — kritik past. Sotuv jarayonida katta muammo bor.");
- }
- }
-
- // Budjet samaradorligi
- if (spend > 0 && leads > 0) {
- maxScore += 20;
- var efficiency = leads / spend;
- if (efficiency >= 0.2) { score += 20; wins.push("Budjet samaradorligi yaxshi — $1 ga " + efficiency.toFixed(2) + " ta lid."); }
- else if (efficiency >= 0.1) { score += 10; feedback.push("Budjet samaradorligini oshirish mumkin. Lookalike auditoriya sinang."); }
- else { warnings.push("Kam lid, ko'p xarajat. Audience yoki offer to'liq qayta ko'rib chiqilsin."); }
- }
-
- var pct = maxScore > 0 ? Math.round(score / maxScore * 100) : 0;
- var grade = pct >= 80 ? 'A' : pct >= 60 ? 'B' : pct >= 40 ? 'C' : 'D';
- var gradeColor = grade === 'A' ? 'var(--success)' : grade === 'B' ? '#3B82F6' : grade === 'C' ? 'var(--warning)' : 'var(--danger)';
- var gradeMsg = grade === 'A' ? 'Reklamalar yaxshi ishlayapti!' : grade === 'B' ? 'Yaxshi, lekin yaxshilash mumkin' : grade === 'C' ? "Jiddiy o'zgarishlar kerak" : 'Reklamalar samarasiz — tizimni qayta qurish kerak';
-
- var html = '<div style="background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:0">';
-
- // Umumiy baho
- html += '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">';
- html += '<div style="width:64px;height:64px;border-radius:50%;background:' + gradeColor + ';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;flex-shrink:0">' + grade + '</div>';
- html += '<div><div style="font-size:16px;font-weight:700;color:var(--white)">' + gradeMsg + '</div>';
- html += '<div style="font-size:13px;color:var(--text2);margin-top:4px">Umumiy ball: ' + pct + '/100</div>';
- if (cpl) html += '<div style="font-size:12px;color:var(--text3)">CPL: $' + cpl + (convR ? ' | Konversiya: ' + convR + '%' : '') + '</div>';
- html += '</div></div>';
-
- // Yutuqlar
- if (wins.length > 0) {
- html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--success);margin-bottom:6px">✅ YAXSHI TOMONLAR</div>';
- wins.forEach(function(w) {
- html += '<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(16,185,129,0.08);border-radius:6px;margin-bottom:4px">✓ ' + w + '</div>';
+function setPrevStep(n) {
+ var texts = ["Facebook'dan 30 kunlik ma'lumot olindi", 'Kampaniyalar tahlil qilindi', 'Natija tayyor'];
+ var pending = ["⏳ Facebook'dan 30 kunlik ma'lumot olinmoqda...", '⏳ Kampaniyalar tahlil qilinmoqda...', '⏳ Natija tayyorlanmoqda...'];
+ ['ls-1', 'ls-2', 'ls-3'].forEach(function(id, i) {
+  var el = document.getElementById(id);
+  el.classList.remove('active', 'done');
+  el.style.color = '';
+  if (i < n) { el.classList.add('done'); el.textContent = texts[i]; return; }
+  el.textContent = pending[i];
+  if (i === n) el.classList.add('active'); else el.style.color = 'var(--text3)';
  });
- html += '</div>';
- }
-
- // Tavsiyalar
- if (feedback.length > 0) {
- html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--warning);margin-bottom:6px">🔧 YAXSHILASH KERAK</div>';
- feedback.forEach(function(f) {
- html += '<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(245,158,11,0.08);border-radius:6px;margin-bottom:4px">→ ' + f + '</div>';
- });
- html += '</div>';
- }
-
- // Ogohlantirishlar
- if (warnings.length > 0) {
- html += '<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">⚠️ MUAMMOLAR</div>';
- warnings.forEach(function(w) {
- html += '<div style="font-size:12px;color:var(--text2);padding:5px 10px;background:rgba(239,68,68,0.08);border-radius:6px;margin-bottom:4px">⚡ ' + w + '</div>';
- });
- html += '</div>';
- }
-
- html += '<div style="margin-top:10px;padding:10px;background:rgba(108,60,225,0.1);border-radius:8px;font-size:12px;color:var(--primary-light)">💡 <strong>Keyingi qadam:</strong> Quyidagi dashboardda yangi kampaniya strategiyasini tuzing.</div>';
- html += '</div>';
-
- var resultEl = document.getElementById('prev-analysis-result');
- resultEl.innerHTML = html;
- resultEl.style.display = 'block';
-
- // State ga saqla
- state.prevAnalysis = { spend: spend, leads: leads, sales: sales, ctr: ctr, cpl: cpl, grade: grade, pct: pct };
- if (nisha && document.getElementById('nisha')) document.getElementById('nisha').value = nisha;
-
- // "Davom etish" tugmasini ko'rsatish
- document.querySelector('#analysis-prev-screen .onboard-btns-row') &&
- document.querySelector('#analysis-prev-screen .onboard-btns-row').classList.remove('hidden');
+ var lbl = ["Facebook'dan ma'lumot olinmoqda...", 'Kampaniyalar tahlil qilinmoqda...', 'Natija tayyorlanmoqda...'][n];
+ if (lbl) document.getElementById('loading-step-text').textContent = lbl;
 }
+
+function showPrevResult(html, wide) {
+ document.getElementById('prev-idle-state').style.display = 'none';
+ document.getElementById('prev-loading-state').style.display = 'none';
+ document.getElementById('prev-result-state').style.display = 'block';
+ document.getElementById('prev-result').innerHTML = html;
+ document.querySelector('#analysis-prev-screen .onboard-box').style.maxWidth = wide ? '680px' : '480px';
+ document.getElementById('analysis-prev-screen').scrollTop = 0;
+}
+
+function prevMessage(icon, title, text, retry) {
+ showPrevResult('<div style="text-align:center;padding:10px 0">' +
+  '<div style="font-size:48px;margin-bottom:12px">' + icon + '</div>' +
+  '<div style="font-size:17px;font-weight:700;color:var(--white);margin-bottom:8px">' + title + '</div>' +
+  '<div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">' + text + '</div>' +
+  (retry ? '<button onclick="startPrevAnalysis()" style="width:100%;padding:12px;background:var(--primary);border:none;border-radius:10px;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">🔄 Qayta urinish</button>' : '') +
+  '</div>', false);
+}
+
+async function startPrevAnalysis() {
+ var acc = state.fbAccess || {};
+ if (!acc.accId || !state.fbToken || typeof FB === 'undefined') {
+  prevMessage('🔌', 'Facebook ulanmagan', "Tahlil uchun avval \"Facebook bilan ulash\" orqali reklama akkauntini ulang.", false);
+  return;
+ }
+ var run = state.prevRun = (state.prevRun || 0) + 1;
+ state.prevAnalysis = null;
+ var accId = acc.accId.indexOf('act_') === 0 ? acc.accId : 'act_' + acc.accId;
+ document.getElementById('prev-idle-state').style.display = 'none';
+ document.getElementById('prev-result-state').style.display = 'none';
+ document.getElementById('prev-loading-state').style.display = 'block';
+ setPrevStep(0);
+ try {
+  var common = { date_preset: 'last_30d' };
+  var res = await Promise.all([
+   fbGet('/' + accId, { fields: 'currency,name' }),
+   fbGetAll('/' + accId + '/insights', Object.assign({ level: 'campaign', limit: 100,
+    fields: 'campaign_id,campaign_name,objective,spend,impressions,frequency,inline_link_clicks,actions' }, common), 5),
+   fbGet('/' + accId + '/insights', Object.assign({ level: 'account', fields: 'reach,frequency' }, common))
+  ]);
+  if (run !== state.prevRun) return; // foydalanuvchi o'tkazib yubordi yoki qayta bosdi
+  setPrevStep(1);
+  var currency = /^[A-Z]{3}$/.test(res[0].currency || '') ? res[0].currency : 'USD';
+  var a = analyzeAccount(res[1], (res[2].data || [])[0], currency);
+  if (!a.camps.length) {
+   prevMessage('📭', "Ma'lumot yo'q", "Bu akkauntda oxirgi 30 kunda reklama sarfi bo'lmagan. Reklama yoqilgandan keyin tahlilni qayta ishga tushiring.", false);
+   return;
+  }
+  setPrevStep(2);
+  a.summary = { currency: a.currency, type: a.type, spend: +a.totals.spend.toFixed(2), results: a.totals.results,
+   cpr: a.totals.cpr == null ? null : +a.totals.cpr.toFixed(2), ctr: +a.totals.ctr.toFixed(2), grade: a.grade };
+  state.prevAnalysis = a;
+  showPrevResult(renderPrevAnalysis(a), true);
+  fetchPrevReview(a, run);
+ } catch (e) {
+  if (run !== state.prevRun) return;
+  prevMessage('⚠️', 'Tahlil qilib bo\'lmadi', esc(e.message), true);
+ }
+}
+
+function renderPrevAnalysis(a) {
+ var R = RESULT_TYPES[a.type], T = a.totals, F = function(v) { return fmtMoney(v, a.currency); };
+ var gradeColor = { A: 'var(--success)', B: '#3B82F6', C: 'var(--warning)', D: 'var(--danger)' }[a.grade];
+ var gradeMsg = { A: 'Reklamalar yaxshi ishlayapti!', B: 'Yaxshi, lekin yaxshilash mumkin', C: "Jiddiy o'zgarishlar kerak", D: 'Reklamalar samarasiz — tizimni qayta qurish kerak' }[a.grade];
+ var tile = function(v, l, color) { return '<div class="metric-card" style="padding:12px"><div class="metric-value" style="font-size:17px' + (color ? ';color:' + color : '') + '">' + v + '</div><div class="metric-label">' + l + '</div></div>'; };
+ var list = function(items, title, color, bg, mark) {
+  if (!items.length) return '';
+  return '<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:' + color + ';margin-bottom:6px">' + title + '</div>' +
+   items.map(function(t) { return '<div style="font-size:12px;color:var(--text2);padding:6px 10px;background:' + bg + ';border-radius:6px;margin-bottom:4px">' + mark + ' ' + t + '</div>'; }).join('') + '</div>';
+ };
+ var badge = function(c) {
+  if (c.flags.indexOf('best') >= 0) return '<span class="badge badge-success">Eng yaxshi</span>';
+  if (c.flags.indexOf('waste') >= 0) return '<span class="badge badge-danger">Natija 0</span>';
+  if (c.flags.indexOf('expensive') >= 0 || c.flags.indexOf('worst') >= 0) return '<span class="badge badge-warning">Qimmat</span>';
+  if (c.flags.indexOf('fatigue') >= 0) return '<span class="badge badge-warning">Charchagan</span>';
+  if (c.flags.indexOf('lowctr') >= 0) return '<span class="badge badge-warning">CTR past</span>';
+  if (c.flags.indexOf('other') >= 0) return '<span class="badge badge-info">Boshqa maqsad</span>';
+  return '';
+ };
+ var rows = a.camps.slice(0, 8).map(function(c) {
+  return '<tr><td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(c.name) + '">' + esc(c.name) + '<div style="margin-top:3px">' + badge(c) + '</div></td>' +
+   '<td>' + F(c.spend) + '</td><td>' + (c.convGoal ? fmtInt(c.results) : '—') + '</td><td>' + (c.cpr != null && c.convGoal ? F(c.cpr) : '—') + '</td>' +
+   '<td>' + c.ctr.toFixed(2) + '%</td><td>' + c.frequency.toFixed(1) + '</td></tr>';
+ }).join('');
+
+ return '<div style="text-align:left">' +
+  '<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">' +
+   '<div style="width:64px;height:64px;border-radius:50%;background:' + gradeColor + ';display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;flex-shrink:0">' + a.grade + '</div>' +
+   '<div><div style="font-size:16px;font-weight:700;color:var(--white)">' + gradeMsg + '</div>' +
+   '<div style="font-size:13px;color:var(--text2);margin-top:4px">Umumiy ball: ' + a.pct + '/100 · oxirgi 30 kun · ' + a.camps.length + ' ta kampaniya</div></div>' +
+  '</div>' +
+  '<div class="metrics-grid" style="grid-template-columns:repeat(auto-fit,minmax(max(100px,30%),1fr));gap:8px;margin-bottom:16px">' +
+   tile(F(T.spend), 'Sarf') + tile(T.reach ? fmtInt(T.reach) : fmtInt(T.impressions), T.reach ? 'Qamrov' : "Ko'rsatish") +
+   tile(T.ctr.toFixed(2) + '%', 'Link CTR') + tile(F(T.cpm), 'CPM') +
+   tile(fmtInt(T.results), R.label + 'lar', 'var(--success)') + tile(T.cpr != null ? F(T.cpr) : '—', R.cost, 'var(--accent)') +
+  '</div>' +
+  list(a.wins, '✅ YAXSHI TOMONLAR', 'var(--success)', 'rgba(16,185,129,0.08)', '✓') +
+  list(a.warnings, '⚠️ MUAMMOLAR', 'var(--danger)', 'rgba(239,68,68,0.08)', '⚡') +
+  (a.wasteSpend > 0 ? '<div style="font-size:13px;color:var(--white);background:rgba(239,68,68,0.12);border:1px solid var(--danger);border-radius:8px;padding:10px 12px;margin-bottom:12px">💸 Natijasiz sarf: <b>' + F(a.wasteSpend) + '</b> (' + Math.round(a.wasteShare * 100) + '% budjet)</div>' : '') +
+  '<div class="table-wrap" style="margin-bottom:14px"><table><thead><tr><th>Kampaniya</th><th>Sarf</th><th>' + R.label + '</th><th>' + R.cost + '</th><th>CTR</th><th>Chastota</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+  (a.camps.length > 8 ? '<div style="font-size:11px;color:var(--text3);margin:-8px 0 12px">Sarf bo\'yicha top 8 ko\'rsatildi (jami ' + a.camps.length + ' ta).</div>' : '') +
+  '<div class="ai-block" id="prev-ai-block"><div class="ai-block-title">🤖 AI xulosa <span id="prev-ai-src" style="font-weight:400;color:var(--text3)"></span></div>' +
+   '<div id="prev-ai" style="font-size:13px;color:var(--text2);line-height:1.6"><span style="opacity:.6">⏳ AI xulosa tayyorlanmoqda...</span></div></div>' +
+  a.notes.map(function(n) { return '<div style="font-size:11px;color:var(--text3);margin-bottom:4px">ℹ️ ' + n + '</div>'; }).join('') +
+ '</div>';
+}
+
+async function fetchPrevReview(a, run) {
+ var out = document.getElementById('prev-ai'), src = document.getElementById('prev-ai-src');
+ try {
+  var data = await apiCall('POST', '/ai/review', {
+   currency: a.currency, type: a.type, grade: a.grade, pct: a.pct,
+   totals: { spend: a.totals.spend, impressions: a.totals.impressions, reach: a.totals.reach, results: a.totals.results,
+    cpr: a.totals.cpr, ctr: a.totals.ctr, cpm: a.totals.cpm, frequency: a.totals.frequency },
+   campaigns: a.camps.slice(0, 20).map(function(c) {
+    return { name: c.name, objective: c.objective, spend: c.spend, results: c.results, cpr: c.cpr, ctr: c.ctr, cpm: c.cpm, frequency: c.frequency, share: c.share, flags: c.flags };
+   })
+  }, false);
+  if (run !== state.prevRun || !out) return;
+  out.innerHTML = mdLite(data.text);
+  if (src) src.textContent = data.source === 'template' ? '(shablon)' : '(' + data.source + ')';
+ } catch (e) {
+  if (run !== state.prevRun) return;
+  var blk = document.getElementById('prev-ai-block');
+  if (blk) blk.style.display = 'none'; // raqamli tahlil baribir ko'rinib turadi
+ }
+}
+
 
 function onboardNo() {
  // Yangi boshlovchi — to'g'ridan-to'g'ri ilovaga (hech qanday to'siqsiz)
@@ -1289,7 +1326,8 @@ function mdLite(t) {
   return (t || '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--white)">$1</strong>')
-    .replace(/\n/g, '<br>');
+    .replace(/\n/g, '<br>')
+    .replace(/(^|<br>)_(.+?)_(?=<br>|$)/g, '$1<em style="color:var(--text3)">$2</em>');
 }
 
 async function fetchAIStrategy(d) {
@@ -1302,7 +1340,8 @@ async function fetchAIStrategy(d) {
   try {
     const data = await apiCall('POST', '/ai/analyze', {
       bizName: d.bizName, nisha: d.nisha, offer: d.offer, budget: d.budget,
-      geo: d.geo, goal: d.goal, conversion: d.conversion, pain: d.pain, dream: d.dream
+      geo: d.geo, goal: d.goal, conversion: d.conversion, pain: d.pain, dream: d.dream,
+      prev: state.prevAnalysis ? state.prevAnalysis.summary : null
     }, false);
     out.innerHTML = mdLite(data.text);
     if (srcEl) srcEl.textContent = data.source === 'template' ? '(shablon)' : '(' + data.source + ')';
@@ -1340,8 +1379,6 @@ function generateAnalysis() {
  const needCreatives = d.budget < 300 ? 3 : d.budget < 700 ? 6 : 10;
 
  // AI Summary — Maslow + voronka + kampaniya nomi
- const maslow = MASLOW[d.nisha] || { daraja: 3, motiv: 'Qulaylik', trigger: 'Muammo → Yechim' };
- const funnel = getFunnelMetrics(d);
  const campName = getCampaignName(d);
  const ct = CAMPAIGN_TYPES[d.goal] || {};
 
@@ -1520,14 +1557,14 @@ async function launchCampaign() {
  if (canReal) {
  showToast('⏳ Facebook\'da real kampaniya yaratilmoqda...');
  try {
- var res = await apiCall('POST', '/api/meta/launch', {
+ var res = await apiCall('POST', '/meta/launch', {
  fbToken: state.fbToken,
  adAccountId: acc.accId,
  pageId: acc.pageId,
  name: (d.bizName || 'AI Targetolog') + ' — ' + (d.nisha || 'test'),
  dailyBudget: 5,
  ageMin: 18, ageMax: 55,
- link: d.offer || 'https://qayumov0801.github.io/ai-targetolog/',
+ link: /^https?:\/\/\S+$/i.test(d.offer || '') ? d.offer : 'https://qayumov0801.github.io/ai-targetolog/',
  message: (d.bizName || '') + (d.goal ? ' — ' + d.goal : '')
  });
  state.metaLaunch = res;
@@ -1584,15 +1621,9 @@ function generateDailyReports() {
  } else if (resp && resp.error) {
  emptyReports("Facebook ma'lumotini olishda xato: " + (resp.error.message || '') + ". Ruxsat berilganini tekshiring.");
  } else {
- emptyReports("Akkaunt ulandi, lekin oxirgi 7 kunda reklama ma'lumoti yo'q. Reklama yoqilгach, real natijalar shu yerda chiqadi.");
+ emptyReports("Akkaunt ulandi, lekin oxirgi 7 kunda reklama ma'lumoti yo'q. Reklama yoqilgach, real natijalar shu yerda chiqadi.");
  }
  });
-}
-
-function leadsFromActions(actions) {
- if (!actions) return 0; var t = 0;
- actions.forEach(function(a){ if (/lead|complete_registration|purchase|conversion/i.test(a.action_type)) t += parseInt(a.value || 0); });
- return t;
 }
 
 function emptyReports(msg) {
@@ -1643,8 +1674,6 @@ function generateOptimization() {
  // Real AI optimizatsiya tavsiyasini backenddan olamiz (fonda)
  fetchAIOptimization();
 
- // Kunlik targetolog faoliyati
- const kunlikFaoliyat = META_ALGORITHM_KNOWLEDGE.kunlik_faoliyat;
 
  document.getElementById('opt-recommendations').innerHTML = `
 
@@ -1720,58 +1749,10 @@ function generateOptimization() {
 // ===== TO'LIQ BILIM BAZASI (Target Pro + Copywriting + Maksimal Marketing + Oltin Nisbat + DotCom Secrets) =====
 
 // ── COPYWRITING 15-QADAM SOTUV XATI FORMULASI (Copywriting kursi: Ideal Sotuv Xati PDF) ──
-// Maqsad: Insonni qadam-baqadam qaror qabul qilish tarafiga olib o'tish
-const COPYWRITING_15_STEPS = [
- {n:1,nom:"Sarlavha",desc:"Diqqatni tortish, 3 soniyada ushlab qolsin."},
- {n:2,nom:"Shok Xabar",desc:"Intriga, kutilmagan fakt."},
- {n:3,nom:"Muammoni takidlash",desc:"Muammoni tasvirlab isbotlang."},
- {n:4,nom:"Negativ Oqibat",desc:"Ogriqni his qildiring."},
- {n:5,nom:"Yechim Taklif",desc:"Yechim borligini korsating."},
- {n:6,nom:"Foydalar",desc:"Xususiyat emas FOYDA."},
- {n:7,nom:"Pozitiv Kelajak",desc:"Hayot ozgarishini his ettiring."},
- {n:8,nom:"Nega Aynan Siz",desc:"USP, raqobatchilardan farqingiz."},
- {n:9,nom:"Isbot",desc:"Mijoz gapi, raqamlar."},
- {n:10,nom:"Qiymat",desc:"10x qiymat korsating."},
- {n:11,nom:"Bonuslar",desc:"Qoshimcha bonuslar."},
- {n:12,nom:"Kafolat",desc:"Risk bizda."},
- {n:13,nom:"CTA",desc:"Bitta aniq harakat."},
- {n:14,nom:"Shoshiltirish",desc:"Muddat cheklovi, 2x sotuv."},
- {n:15,nom:"P.S.",desc:"Oxirini oquvchilar uchun qisqa takrorlash."}
-];
 
 // ── CTR MUAMMO-YECHIM MATRISI ──
-// Manba: SOTUVLAR SONINI OSHIRISH.pdf + CTR % pas.pdf
-const CTR_PROBLEM_MATRIX = [
- {muammo:"CTR % past",belgisi:"CTR < 1%",yechimlar:["HOOKni kuchaytiring","Auditoriyani toraylating","Muammoni aniq korsating","CTA qoshing","Countdown timer"]},
- {muammo:"Tashrif kam",belgisi:"Sayt sekin",yechimlar:["Rasm hajmini kamaytiring","Keraksiz kodni ochiring","Lazyload","Yaxshi hosting"]},
- {muammo:"Lidlar yoq",belgisi:"Click keladi, forma toldirilmaydi",yechimlar:["Sarlavhani yaxshilang","AIDA bilan yozing","Kuchli CTA","Forma maydonlarini kamaytiring"]},
- {muammo:"Sotuvlar yoq",belgisi:"Lid keladi, sotib olmaydi",yechimlar:["Call center skriptini yaxshilang","Follow-up qoshing","Re-target sozlang"]}
-];
 
-// ── RAD ETIB BO'LMAS TAKLIF ASOSLARI (Copywriting kursi: #2 Taklif Asoslari) ──
-const TAKLIF_FRAMEWORK = {
- tamoyillar: [
- 'Yaxshi Bozor — Taklif qilishdan avval bozorda talabni tekshiring (Yaxshi bozor yarim mol)',
- 'Yaxshi bozorning 4 belgilari: Og\'riq bor | Pul bor | Erishish mumkin | O\'sish ustida',
- 'Rad etib bo\'lmas taklif = Katta natija + Tez + Kam harakat + Kafolat',
- 'Taklif = Mahsulot emas. Taklif = Transformation (qanday o\'zgarish bo\'ladi)'
- ],
- tekshiruv: [
- { savol: 'Kimga sotasiz?', maqsad: 'Aniq segment — hammaga emas' },
- { savol: 'Asosiy og\'riq nuqtasi nima?', maqsad: 'Bitta eng katta muammo' },
- { savol: 'Hayot qanday o\'zgaradi?', maqsad: 'Transformation — before/after' },
- { savol: 'Nima uchun raqobatchilar emas siz?', maqsad: 'USP aniq bo\'lsin' },
- { savol: 'Xavf kamaytirishingiz?', maqsad: 'Kafolat yoki risk-reversal' }
- ]
-};
 
-// ── MIJOZ PORTRETI (Maksimal Marketing: dars 1) ──
-const MIJOZ_PORTRET_TEMPLATE = {
- demografik: ['Yosh: __', 'Jins: __', 'Joylashuv: __', 'Daromad darajasi: __', 'Kasb/Soha: __'],
- psixografik: ['Asosiy orzulari: __', 'Asosiy qo\'rquvi: __', 'Kechasi uxlay olmasligiga sabab: __', 'Kelajakdagi o\'zi haqida orzusi: __'],
- xatti_harakat: ['Qayerda vaqt o\'tkazadi: __', 'Kimga ishonadi: __', 'Qanday qaror qabul qiladi: __', 'Oxirgi marta nima sotib oldi: __'],
- og_riq: ['1-darajali og\'riq: __', 'Yashirin og\'riq: __', 'Aytishdan uyaladigan muammo: __']
-};
 
 // ── TRAFFIK HARORATI (Maksimal Marketing: dars 5) ──
 const TRAFFIC_TEMPERATURE = {
@@ -1878,22 +1859,6 @@ const META_ALGORITHM_KNOWLEDGE = {
  ]
 };
 
-// ── SOTUV VORONKASI (Maksimal Marketing: dars 3) ──
-const SOTUV_VORONKASI = {
- oddiy: [
- { bosqich: 'Reklama', konversiya: '100%', harakat: 'Impression → Click' },
- { bosqich: 'Landing Page', konversiya: '2–10%', harakat: 'Click → Lead/So\'rov' },
- { bosqich: 'Muloqot', konversiya: '20–50%', harakat: 'Lead → Suhbat' },
- { bosqich: 'Taklif', konversiya: '10–30%', harakat: 'Suhbat → Taklif' },
- { bosqich: 'Sotuv', konversiya: '5–20%', harakat: 'Taklif → To\'lov' }
- ],
- webinar: [
- { bosqich: 'Reklama → Ro\'yxatdan o\'tish', konversiya: '20–40%', harakat: 'Webinar registratsiya' },
- { bosqich: 'Ro\'yxatdan o\'tish → Kelish', konversiya: '30–50%', harakat: 'Live/replay ko\'rish' },
- { bosqich: 'Webinar → Taklif', konversiya: '5–15%', harakat: 'Pitch qilish' },
- { bosqich: 'Taklif → Sotuv', konversiya: '2–10%', harakat: 'To\'lov' }
- ]
-};
 
 // �
 const STAVKALAR = {
@@ -1947,7 +1912,6 @@ function raqobat(n){return "<span style='color:var(--warning)'>ORTA</span>";}
 function goalToObjective(g){var ct=CAMPAIGN_TYPES[g];return ct?ct.objective:"CONVERSIONS";}
 function getCreativeList(nisha,goal,count){var m=MASLOW[nisha]||{trigger:"Hook"},b=[{type:"VIDEO",desc:"Hook: "+m.trigger},{type:"RASM",desc:"Narx+CTA"},{type:"CAROUSEL",desc:"1:Muammo 5:CTA"},{type:"STORIES",desc:"Vertikal"},{type:"UGC",desc:"Haqiqiy mijoz"},{type:"Before/After",desc:nisha},{type:"Testimonial",desc:"Mijoz fikri"},{type:"Tutorial",desc:"Korsating"},{type:"Offer",desc:"Chegirma"},{type:"FAQ",desc:"3 savol"}];return b.slice(0,count);}
 function getCampaignName(d){var dt=new Date().toISOString().slice(0,7),g=d.geo.includes("Toshkent shahri")?"TSH":"UZ",goal=d.goal.includes("konversiya")?"CONV":d.goal.includes("Lead")?"LEAD":"MSG";return (d.bizName||"BRAND")+"_"+g+"_"+goal+"_"+dt;}
-function getCopywritingFramework(d){var m=MASLOW[d.nisha]||{daraja:3,motiv:"Qulaylik",trigger:"Natija"};return{formula:"AIDA",maslow_daraja:m.daraja,asosiy_motiv:m.motiv,hook:m.trigger,matn_tuzilma:["HOOK: "+m.trigger,"MUAMMO","YECHIM","DALIL","CTA"]};}
 function getFunnelMetrics(d){var db=d.budget/30,cpm=d.geo.includes("Toshkent")?2.5:1.8,ctr=1.5,lpr=d.conversion;var imp=Math.round((db/cpm)*1000),cl=Math.round(imp*ctr/100),lds=Math.round(cl*lpr/100),cpc=cl>0?(db/cl).toFixed(2):"0",cpl=lds>0?(db/lds).toFixed(2):"0";return{impressions:imp,clicks:cl,leads:lds,cpc:cpc,cpl_calc:cpl,cpm:cpm,voronka:[{bosqich:"Impressions",qiymat:imp.toLocaleString(),desc:"CPM: $"+cpm},{bosqich:"Clicks",qiymat:cl.toLocaleString(),desc:"CTR: "+ctr+"%"},{bosqich:"Landing",qiymat:cl.toLocaleString(),desc:"Click=Visit"},{bosqich:"Leads",qiymat:lds.toLocaleString(),desc:"LPR: "+lpr+"%"+(lpr<2?" ⚠️":" ✅")},{bosqich:"CPL",qiymat:"$"+cpl,desc:"Maqsad: $"+d.cpa+" "+(parseFloat(cpl)<=d.cpa?"✅":"⚠️")}]};}
 document.addEventListener("DOMContentLoaded",function(){var sd=document.getElementById("start-date");if(sd)sd.value=new Date().toISOString().split("T")[0];loadFacebookSDK();});
 </script>
