@@ -1253,7 +1253,7 @@ async function fetchPrevReview(a, run) {
    campaigns: a.camps.slice(0, 20).map(function(c) {
     return { name: c.name, objective: c.objective, spend: c.spend, results: c.results, cpr: c.cpr, ctr: c.ctr, cpm: c.cpm, frequency: c.frequency, share: c.share, flags: c.flags };
    })
-  }, false);
+  });
   if (run !== state.prevRun || !out) return;
   out.innerHTML = mdLite(data.text);
   if (src) src.textContent = data.source === 'template' ? '(shablon)' : '(' + data.source + ')';
@@ -1342,7 +1342,7 @@ async function fetchAIStrategy(d) {
       bizName: d.bizName, nisha: d.nisha, offer: d.offer, budget: d.budget,
       geo: d.geo, goal: d.goal, conversion: d.conversion, pain: d.pain, dream: d.dream,
       prev: state.prevAnalysis ? state.prevAnalysis.summary : null
-    }, false);
+    });
     out.innerHTML = mdLite(data.text);
     if (srcEl) srcEl.textContent = data.source === 'template' ? '(shablon)' : '(' + data.source + ')';
     state.lastAI = data;
@@ -1361,7 +1361,7 @@ async function fetchAIOptimization() {
   out.innerHTML = '<span style="opacity:.6">⏳ AI optimizatsiya tavsiyasi tayyorlanmoqda...</span>';
   try {
     const reports = (state.reportRows || []).slice(0, 7);
-    const data = await apiCall('POST', '/ai/optimize', { biz: d, reports }, false);
+    const data = await apiCall('POST', '/ai/optimize', { biz: d, reports });
     out.innerHTML = mdLite(data.text);
   } catch (e) {
     target.style.display = 'none';
