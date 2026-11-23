@@ -943,7 +943,7 @@ function fbConnect() {
       if (btn) btn.textContent = '📘 Facebook bilan ulash';
       showToast('Ulanish bekor qilindi', 'warning');
     }
-  }, { scope: 'ads_read,ads_management,business_management,pages_show_list' });
+  }, { scope: 'ads_read,ads_management,business_management,pages_show_list,pages_manage_ads,pages_read_engagement,leads_retrieval' });
 }
 
 async function fbSelectAccount() {
@@ -1031,9 +1031,45 @@ function agentRenderPlan() {
     '<div style="opacity:.7">Auditoriya, sahifa va tugma shu guruhdan nusxalanadi. Uslub ' + (p.samplesUsed || 0) + ' ta aktiv matndan olindi.</div></div>' +
     '<div style="margin:8px 0"><b>Kunlik umumiy byudjet (' + esc(p.currency) + '):</b> <input id="ag-budget" type="number" min="1" step="any" value="' + esc(p.dailyBudget) + '" style="' + AG_INP + 'width:140px;display:inline-block"> <span style="opacity:.7;font-size:12px">' + (p.cbo ? 'kampaniya darajasida (CBO)' : 'guruhlarga teng bo\'linadi') + '</span></div>' +
     '<div style="margin-top:12px"><b>Videolar</b> <span style="opacity:.7;font-size:12px">(ko\'pi bilan 4 ta)</span></div><div>' + vhtml + '</div>' +
+    agentFormHtml(p) +
     '<div style="margin-top:12px"><b>Xabarlar</b> <span style="opacity:.7;font-size:12px">(har biri alohida guruh; tahrirlash mumkin)</span></div>' + mhtml +
     '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button style="' + AG_BTN + 'background:#00b894;color:#fff" onclick="agentLaunch()">✅ Kampaniyani yaratish (to\'xtatilgan)</button>' +
     '<button style="' + AG_BTN + 'background:#2a2d35;color:#ddd" onclick="agentOpen()">↩︎ Buyruqni o\'zgartirish</button></div>');
+}
+
+function agentFormHtml(p) {
+  var note = p.formNote ? '<div style="color:#fdcb6e;font-size:13px;margin:6px 0">' + esc(p.formNote) + '</div>' : '';
+  if (!p.form) {
+    return (note ? '<div style="margin-top:12px"><b>📝 Lid-forma</b>' + note + '</div>' : '') +
+      (p.formAllowed && !p.form ? '<div style="font-size:12px;opacity:.7;margin-top:8px">Forma: namuna reklamadagi eski forma ishlatiladi. Yangi forma kerak bo\'lsa, buyruqda "yangi forma yarat" deb yozing.</div>' : '');
+  }
+  var f = p.form;
+  var qs = f.questions.map(function(q, i) {
+    if (q.type !== 'CUSTOM') return '<div class="ag-fq" data-type="' + q.type + '" style="font-size:13px;opacity:.85;margin:4px 0">• ' + ({ FULL_NAME: 'Ism familiya', PHONE: 'Telefon', EMAIL: 'Email', CITY: 'Shahar' }[q.type] || q.type) + ' (avtomatik)</div>';
+    return '<div class="ag-fq" data-type="CUSTOM" style="margin:6px 0"><input class="ag-fq-label" style="' + AG_INP + '" value="' + esc(q.label) + '" placeholder="Savol">' +
+      '<input class="ag-fq-opts" style="' + AG_INP + 'margin-top:4px;font-size:12px" value="' + esc((q.options || []).map(function(o) { return o.value; }).join('; ')) + '" placeholder="Variantlar ; bilan ajratiladi (bo\'sh = erkin javob)"></div>';
+  }).join('');
+  return '<div style="margin-top:14px;border:1px solid #3d3a6b;border-radius:10px;padding:10px"><label><input type="checkbox" id="ag-form-on" checked> <b>📝 Yangi lid-forma yaratish</b></label>' + note +
+    '<input id="ag-f-name" style="' + AG_INP + 'margin-top:8px" value="' + esc(f.name) + '" placeholder="Forma nomi">' +
+    '<input id="ag-f-head" style="' + AG_INP + 'margin-top:6px" value="' + esc(f.headline) + '" placeholder="Sarlavha (savollar sahifasi)">' +
+    '<div style="margin-top:8px;font-size:13px"><b>Savollar</b></div>' + qs +
+    '<input id="ag-f-ty-t" style="' + AG_INP + 'margin-top:8px" value="' + esc(f.thank_title) + '" placeholder="Rahmat sarlavhasi">' +
+    '<textarea id="ag-f-ty-b" rows="2" style="' + AG_INP + 'margin-top:6px">' + esc(f.thank_body) + '</textarea>' +
+    '<input id="ag-f-priv" style="' + AG_INP + 'margin-top:6px" value="' + esc(f.privacy_url) + '" placeholder="Maxfiylik siyosati havolasi (majburiy) https://...">' +
+    '<input id="ag-f-site" style="' + AG_INP + 'margin-top:6px" value="' + esc(f.website_url) + '" placeholder="Sayt havolasi (ixtiyoriy)">' +
+    '<input type="hidden" id="ag-f-loc" value="' + esc(f.locale || '') + '"></div>';
+}
+function agentReadForm() {
+  var on = document.getElementById('ag-form-on'); if (!on || !on.checked) return null;
+  var priv = (document.getElementById('ag-f-priv').value || '').trim();
+  if (!/^https?:\/\//i.test(priv)) { showToast('Forma uchun maxfiylik siyosati havolasini kiriting (https://...)', 'warning'); return false; }
+  var questions = Array.prototype.slice.call(document.querySelectorAll('.ag-fq')).map(function(el) {
+    var t = el.getAttribute('data-type'); if (t !== 'CUSTOM') return { type: t };
+    return { type: 'CUSTOM', label: el.querySelector('.ag-fq-label').value, options: el.querySelector('.ag-fq-opts').value.split(';').map(function(x) { return x.trim(); }).filter(Boolean) };
+  });
+  return { name: document.getElementById('ag-f-name').value, headline: document.getElementById('ag-f-head').value, questions: questions,
+    thank_title: document.getElementById('ag-f-ty-t').value, thank_body: document.getElementById('ag-f-ty-b').value,
+    privacy_url: priv, website_url: (document.getElementById('ag-f-site').value || '').trim(), locale: document.getElementById('ag-f-loc').value };
 }
 async function agentLaunch() {
   var p = agentState.plan; if (!p) return;
@@ -1047,9 +1083,10 @@ async function agentLaunch() {
   });
   if (!messages.length) { showToast('Kamida 1 ta xabar tanlang', 'warning'); return; }
   var budget = parseFloat((document.getElementById('ag-budget') || {}).value) || p.dailyBudget;
+  var form = agentReadForm(); if (form === false) return;
   agentModal('<b>⏳ Kampaniya yaratilmoqda...</b><div style="opacity:.7;margin-top:8px">' + messages.length + ' ta guruh × ' + videoIds.length + ' ta video. Kampaniya to\'xtatilgan holatda yaratiladi.</div>');
   try {
-    var r = await apiCall('POST', '/agent/launch', { fbToken: state.fbToken, planId: p.planId, messages: messages, videoIds: videoIds, dailyBudget: budget });
+    var r = await apiCall('POST', '/agent/launch', { fbToken: state.fbToken, planId: p.planId, messages: messages, videoIds: videoIds, dailyBudget: budget, form: form });
     agentState.result = r; agentRenderResult(r);
   } catch (e) {
     agentModal('<b>❌ Yaratilmadi</b><div style="margin:8px 0">' + esc(e.message) + '</div><button style="' + AG_BTN + 'background:#6c5ce7;color:#fff" onclick="agentRenderPlan()">Rejaga qaytish</button>');
@@ -1058,7 +1095,7 @@ async function agentLaunch() {
 function agentRenderResult(r) {
   var errs = (r.errors || []).length ? '<div style="margin-top:8px;color:#fdcb6e;font-size:13px"><b>Ogohlantirishlar:</b><br>' + r.errors.map(esc).join('<br>') + '</div>' : '';
   agentModal('<b style="font-size:17px">' + (r.ads ? '✅ Kampaniya tayyor (to\'xtatilgan)' : '⚠️ E\'lonlar yaratilmadi') + '</b>' +
-    '<div style="margin:8px 0">Guruhlar: ' + (r.adsets || 0) + ' · E\'lonlar: ' + (r.ads || 0) + '</div>' + errs +
+    '<div style="margin:8px 0">Guruhlar: ' + (r.adsets || 0) + ' · E\'lonlar: ' + (r.ads || 0) + (r.formId ? ' · Yangi forma: ' + esc(r.formId) : '') + '</div>' + errs +
     '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">' +
     (r.ads && r.campaignId ? '<button id="ag-act-btn" style="' + AG_BTN + 'background:#e17055;color:#fff" onclick="agentActivate()">▶️ Yoqish (pul sarflana boshlaydi)</button>' : '') +
     '<a href="' + esc(r.adsManager || '#') + '" target="_blank" style="' + AG_BTN + 'background:#2a2d35;color:#ddd;text-decoration:none">Ads Manager\'da ko\'rish</a>' +
