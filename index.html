@@ -606,6 +606,18 @@ var API_URL = window.location.hostname === 'localhost' || window.location.hostna
   : 'https://ai-targetolog.onrender.com/api';
 
 var TOKEN_KEY = 'ait_token';
+var FB_ACC_KEY = 'ait_fb_acc';
+// Server uxlab qolgan bo'lsa — sahifa ochilishi bilan uyg'otamiz (birinchi so'rov tez bo'lsin)
+try { fetch((location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 'http://localhost:3001/api' : 'https://ai-targetolog.onrender.com/api') + '/health').catch(function() {}); } catch (e) {}
+// Facebook tokeni 1–2 soatda eskiradi — agent so'rovidan oldin yangisini olamiz
+function fbFreshToken() {
+  return new Promise(function(resolve) {
+    if (typeof FB === 'undefined' || !FB_READY) return resolve(state.fbToken);
+    var done = false; setTimeout(function() { if (!done) { done = true; resolve(state.fbToken); } }, 4000);
+    try { FB.getLoginStatus(function(r) { if (done) return; done = true; if (r && r.authResponse && r.authResponse.accessToken) state.fbToken = r.authResponse.accessToken; resolve(state.fbToken); }, true); }
+    catch (e) { done = true; resolve(state.fbToken); }
+  });
+}
 var USER_KEY = 'ait_user';
 
 // ===== FACEBOOK LOGIN =====
@@ -620,6 +632,16 @@ function loadFacebookSDK() {
     FB_READY = true;
     var b = document.getElementById('fb-connect-block');
     if (b) b.style.display = 'block';
+    // Sahifa yangilansa ham Facebook ulanishi va tanlangan akkaunt saqlanib qoladi
+    try {
+      FB.getLoginStatus(function(r) {
+        if (!r || r.status !== 'connected' || !r.authResponse) return;
+        state.fbToken = r.authResponse.accessToken;
+        var saved = null; try { saved = JSON.parse(localStorage.getItem(FB_ACC_KEY) || 'null'); } catch (e) {}
+        if (saved && saved.accId && !state.fbAccess) state.fbAccess = saved;
+        if (state.fbAccess && state.fbAccess.accId) agentInit();
+      });
+    } catch (e) {}
   };
   (function(d, s, id){
     if (d.getElementById(id)) return;
@@ -646,8 +668,14 @@ async function apiCall(method, path, body, auth) {
     if (tk) opts.headers['Authorization'] = 'Bearer ' + tk;
   }
   if (body) opts.body = JSON.stringify(body);
-  var res = await fetch(API_URL + path, opts);
-  var data = await res.json();
+  try { opts.signal = AbortSignal.timeout(path.indexOf('/agent/') === 0 ? 240000 : 90000); } catch (e) {}
+  var res;
+  try { res = await fetch(API_URL + path, opts); }
+  catch (e) { throw new Error(e && e.name === 'TimeoutError' ? 'Server javob bermadi (vaqt tugadi). Qayta urinib ko\'ring.' : 'Internet yoki server bilan aloqa yo\'q. Qayta urinib ko\'ring.'); }
+  var data = null;
+  try { data = await res.json(); } catch (e) { data = null; }
+  if (!data) throw new Error(res.status >= 500 ? 'Server hozir yangilanmoqda yoki uyg\'onmoqda (' + res.status + '). 30 soniyadan keyin qayta urinib ko\'ring.' : 'Server javobi tushunarsiz (' + res.status + ')');
+  if (res.status === 401 && path.indexOf('/auth/') !== 0) throw new Error((data && data.error) || 'Sessiya tugagan — qayta kiring');
   if (!res.ok) throw new Error(data.error || 'Xato');
   return data;
 }
@@ -957,6 +985,7 @@ async function fbSelectAccount() {
   var pageId = pages.length ? pages[0].id : '';
   if (pages.length) pageName = pages[0].name || pageName;
   state.fbAccess = { accId: accId, bmId: bmId, pageName: pageName, pageId: pageId };
+  try { localStorage.setItem(FB_ACC_KEY, JSON.stringify(state.fbAccess)); } catch (e) {}
   agentInit();
   var tk = localStorage.getItem(TOKEN_KEY);
   if (tk) { try { await apiCall('PATCH', '/auth/update-fb', { fb_acc_id: accId, bm_id: bmId, page_name: pageName }); } catch(e) {} }
@@ -1033,8 +1062,9 @@ async function agentPlan() {
   var cmd = (document.getElementById('agent-cmd') || {}).value || '';
   if (!cmd.trim()) { showToast('Buyruq yozing', 'warning'); return; }
   agentState.lastCmd = cmd;
-  agentModal('<b>⏳ Reja tuzilmoqda...</b><div style="opacity:.7;margin-top:8px">Aktiv reklamalar, matnlar va videolar o\'qilyapti, AI xabarlar yozyapti. Bu 30–90 soniya oladi.</div>');
+  agentModal('<b>⏳ Reja tuzilmoqda...</b><div style="opacity:.7;margin-top:8px">Aktiv reklamalar, matnlar va videolar o\'qilyapti, AI xabarlar yozyapti. Odatda 20–40 soniya.</div>');
   try {
+    await fbFreshToken();
     var plan = await apiCall('POST', '/agent/plan', { fbToken: state.fbToken, adAccountId: state.fbAccess.accId, command: cmd });
     agentState.plan = plan; agentRenderPlan();
   } catch (e) {
@@ -1147,6 +1177,7 @@ async function agentLaunch() {
   var form = agentReadForm(); if (form === false) return;
   agentModal('<b>⏳ Kampaniya yaratilmoqda...</b><div style="opacity:.7;margin-top:8px">' + groups + ' ta guruh × ' + videoIds.length + ' ta video. Kampaniya to\'xtatilgan holatda yaratiladi.</div>');
   try {
+    await fbFreshToken();
     var r = await apiCall('POST', '/agent/launch', { fbToken: state.fbToken, planId: p.planId, messages: messages, videoIds: videoIds, dailyBudget: budget, perAdset: per, audienceKeys: audienceKeys, form: form });
     agentState.result = r; agentRenderResult(r);
   } catch (e) {
@@ -1166,7 +1197,7 @@ async function agentActivate() {
   var r = agentState.result; if (!r || !r.campaignId) return;
   if (!confirm('Kampaniya yoqilsin? Reklama ishga tushadi va byudjet sarflana boshlaydi.')) return;
   var b = document.getElementById('ag-act-btn'); if (b) b.textContent = '⏳...';
-  try { await apiCall('POST', '/agent/activate', { fbToken: state.fbToken, campaignId: r.campaignId }); showToast('▶️ Kampaniya yoqildi'); if (b) { b.textContent = '✅ Yoqildi'; b.disabled = true; } }
+  try { await fbFreshToken(); await apiCall('POST', '/agent/activate', { fbToken: state.fbToken, campaignId: r.campaignId }); showToast('▶️ Kampaniya yoqildi'); if (b) { b.textContent = '✅ Yoqildi'; b.disabled = true; } }
   catch (e) { showToast(e.message, 'warning'); if (b) b.textContent = '▶️ Yoqish'; }
 }
 
